@@ -838,3 +838,267 @@ body.light-theme .anomaly-disclaimer {
     transition: none;
   }
 }
+
+/* INCIDENT TIMELINE */
+
+.incident-timeline-panel {
+    margin-top: 24px;
+    padding: 24px;
+    background: var(--panel, #151b2b);
+    border: 1px solid var(--border, rgba(255,255,255,0.08));
+    border-radius: 16px;
+}
+
+.incident-timeline-panel .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.incident-timeline-panel h2 {
+    margin: 0 0 6px;
+}
+
+.incident-timeline-panel p {
+    color: var(--muted, #929bb0);
+    font-size: 13px;
+}
+
+.timeline-live-badge {
+    padding: 7px 10px;
+    border-radius: 8px;
+    background: rgba(124, 92, 255, 0.12);
+    color: #a994ff;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.7px;
+}
+
+.timeline-summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.timeline-stat {
+    padding: 16px;
+    border: 1px solid var(--border, rgba(255,255,255,0.08));
+    border-radius: 12px;
+    background: rgba(255,255,255,0.025);
+}
+
+.timeline-stat span {
+    display: block;
+    color: var(--muted, #929bb0);
+    font-size: 12px;
+    margin-bottom: 8px;
+}
+
+.timeline-stat strong {
+    font-size: 24px;
+}
+
+.timeline-filter {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 22px;
+}
+
+.timeline-filter label {
+    font-size: 13px;
+    color: var(--muted, #929bb0);
+}
+
+.timeline-filter select {
+    padding: 9px 12px;
+    border-radius: 8px;
+    background: var(--background, #101626);
+    color: var(--text, #ffffff);
+    border: 1px solid var(--border, rgba(255,255,255,0.12));
+}
+
+.incident-timeline {
+    position: relative;
+    padding-left: 26px;
+}
+
+.incident-timeline::before {
+    content: "";
+    position: absolute;
+    left: 7px;
+    top: 8px;
+    bottom: 8px;
+    width: 2px;
+    background: linear-gradient(
+        to bottom,
+        #8b75ff,
+        rgba(139,117,255,0.08)
+    );
+}
+
+.timeline-event {
+    position: relative;
+    padding: 0 0 24px 20px;
+}
+
+.timeline-event::before {
+    content: "";
+    position: absolute;
+    left: -24px;
+    top: 5px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #8b75ff;
+    box-shadow: 0 0 12px rgba(139,117,255,0.45);
+}
+
+.timeline-event.critical::before {
+    background: #ff5368;
+    box-shadow: 0 0 12px rgba(255,83,104,0.4);
+}
+
+.timeline-event.error::before {
+    background: #ff9855;
+}
+
+.timeline-event.warning::before {
+    background: #e9c45b;
+}
+
+.timeline-event-card {
+    padding: 15px;
+    background: rgba(255,255,255,0.025);
+    border: 1px solid var(--border, rgba(255,255,255,0.08));
+    border-radius: 12px;
+}
+
+.timeline-event-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.timeline-event-time {
+    color: var(--muted, #929bb0);
+    font-size: 12px;
+}
+
+.timeline-event-severity {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.timeline-event-message {
+    font-size: 13px;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+}
+
+.timeline-event-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.timeline-tag {
+    padding: 5px 8px;
+    border-radius: 6px;
+    background: rgba(124,92,255,0.10);
+    color: #aa98ff;
+    font-size: 10px;
+}
+
+.timeline-first {
+    color: #53d6a2;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.timeline-empty {
+    padding: 30px 15px;
+    text-align: center;
+    color: var(--muted, #929bb0);
+    border: 1px dashed var(--border, rgba(255,255,255,0.15));
+    border-radius: 12px;
+}
+
+@media (max-width: 600px) {
+    .timeline-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .incident-timeline-panel {
+        padding: 16px;
+    }
+
+    .incident-timeline-panel .panel-header {
+        flex-direction: column;
+    }
+}
+
+/* INCIDENT TIMELINE — SEVERITY COLORS */
+
+.timeline-event.critical::before {
+    background: #ff5368;
+    box-shadow: 0 0 12px rgba(255,83,104,0.4);
+}
+
+.timeline-event.error::before {
+    background: #ff9855;
+    box-shadow: 0 0 12px rgba(255,152,85,0.4);
+}
+
+.timeline-event.warning::before {
+    background: #e9c45b;
+    box-shadow: 0 0 12px rgba(233,196,91,0.4);
+}
+
+.timeline-event.info::before {
+    background: #648dff;
+    box-shadow: 0 0 12px rgba(100,141,255,0.4);
+}
+
+/* TIMELINE READABILITY */
+
+.timeline-event-card {
+    transition: border-color .2s ease, transform .2s ease;
+}
+
+.timeline-event-card:hover {
+    border-color: var(--purple);
+    transform: translateX(3px);
+}
+
+.timeline-event-message {
+    color: var(--text);
+}
+
+.timeline-event-severity {
+    letter-spacing: .5px;
+}
+
+@media (max-width: 420px) {
+    .timeline-filter {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .timeline-filter select {
+        width: 100%;
+    }
+
+    .anomaly-card-top {
+        flex-wrap: wrap;
+    }
+}
