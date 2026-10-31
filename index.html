@@ -35,6 +35,9 @@
         <button class="nav-link" data-section="incidents">
           <span>◈</span> Incidents
         </button>
+        <button class="nav-link" data-section="anomalies">
+          <span>⌁</span> Anomaly Detection
+        </button>
         <button class="nav-link" data-section="investigator">
           <span>✧</span> Root Cause Investigator
         </button>
@@ -300,6 +303,15 @@
                   <b>→</b>
                 </button>
 
+                <button data-go="anomalies">
+                  <span class="quick-icon orange">⌁</span>
+                  <span>
+                    <strong>Detect anomalies</strong>
+                    <small>Find unusual log activity</small>
+                  </span>
+                  <b>→</b>
+                </button>
+
                 <button data-go="investigator">
                   <span class="quick-icon purple">✧</span>
                   <span>
@@ -502,6 +514,158 @@
               </div>
             </div>
           </div>
+        </section>
+
+        <!-- =================================
+             ANOMALY DETECTION
+        ================================== -->
+        <section class="page-section app-section" id="anomalies">
+
+          <div class="page-heading">
+            <div>
+              <div class="eyebrow">INTELLIGENCE / BEHAVIOR ANALYSIS</div>
+              <h1>Anomaly Detection</h1>
+              <p class="subtitle">
+                Identify unusual activity, sudden error spikes and abnormal
+                application behavior in your logs.
+              </p>
+            </div>
+
+            <button class="primary-button" id="runAnomalyDetection">
+              ↻ Analyze logs
+            </button>
+          </div>
+
+          <!-- INTRODUCTION -->
+          <div class="investigator-intro anomaly-intro">
+            <div class="investigator-orb">⌁</div>
+            <div>
+              <h2>Discover what doesn't look normal.</h2>
+              <p>
+                LogLens analyzes log activity to identify unusual error
+                concentrations, sudden severity changes and repeated failures.
+                Each detection includes an explanation to help you investigate.
+              </p>
+            </div>
+          </div>
+
+          <!-- ANOMALY SUMMARY -->
+          <div class="section-heading">
+            <div>
+              <h2>Anomaly overview</h2>
+              <p>Summary of unusual patterns in the current log session</p>
+            </div>
+            <span class="session-label" id="anomalyStatus">
+              Waiting for analysis
+            </span>
+          </div>
+
+          <div class="stats-grid anomaly-stats">
+
+            <article class="stat-card">
+              <div class="stat-top">
+                <span>Total anomalies</span>
+                <span class="stat-icon purple">⌁</span>
+              </div>
+              <div class="stat-value" id="anomalyCount">0</div>
+              <div class="stat-foot">Unusual patterns identified</div>
+            </article>
+
+            <article class="stat-card">
+              <div class="stat-top">
+                <span>High severity</span>
+                <span class="stat-icon red">!</span>
+              </div>
+              <div class="stat-value" id="highAnomalyCount">0</div>
+              <div class="stat-foot">Requires closer investigation</div>
+            </article>
+
+            <article class="stat-card">
+              <div class="stat-top">
+                <span>Affected services</span>
+                <span class="stat-icon orange">◈</span>
+              </div>
+              <div class="stat-value" id="affectedServiceCount">0</div>
+              <div class="stat-foot">Services showing unusual activity</div>
+            </article>
+
+            <article class="stat-card">
+              <div class="stat-top">
+                <span>Analyzed entries</span>
+                <span class="stat-icon blue">▤</span>
+              </div>
+              <div class="stat-value" id="analyzedEntryCount">0</div>
+              <div class="stat-foot">Logs included in this analysis</div>
+            </article>
+
+          </div>
+
+          <!-- ANALYSIS EXPLANATION -->
+          <div class="panel anomaly-method-panel">
+            <div class="panel-heading">
+              <div>
+                <h3>Detection methodology</h3>
+                <p>How LogLens identifies unusual log behavior</p>
+              </div>
+              <span class="local-badge">LOCAL ANALYSIS</span>
+            </div>
+
+            <div class="anomaly-method-grid">
+              <div class="anomaly-method-item">
+                <span class="method-icon blue">↗</span>
+                <div>
+                  <strong>Error spike detection</strong>
+                  <p>Finds unusual concentrations of errors within short time periods.</p>
+                </div>
+              </div>
+
+              <div class="anomaly-method-item">
+                <span class="method-icon purple">⌁</span>
+                <div>
+                  <strong>Severity distribution</strong>
+                  <p>Identifies abnormal changes in the distribution of log levels.</p>
+                </div>
+              </div>
+
+              <div class="anomaly-method-item">
+                <span class="method-icon orange">⟳</span>
+                <div>
+                  <strong>Repeated failure detection</strong>
+                  <p>Highlights recurring error patterns that may indicate persistent problems.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- DETECTED ANOMALIES -->
+          <div class="panel anomaly-results-panel">
+            <div class="panel-heading">
+              <div>
+                <h3>Detected anomalies</h3>
+                <p>Unusual events and patterns requiring attention</p>
+              </div>
+              <span class="count-pill" id="anomalyResultCount">0 findings</span>
+            </div>
+
+            <div id="anomalyList">
+              <div class="empty-state">
+                <div class="empty-icon">⌁</div>
+                <strong>No analysis performed yet</strong>
+                <p>Upload log files and select Analyze logs to discover unusual activity.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- ANALYSIS NOTE -->
+          <div class="anomaly-disclaimer">
+            <span>ⓘ</span>
+            <p>
+              Anomaly detection is based on statistical patterns and
+              rule-based analysis of the uploaded logs. Findings are
+              indicators for investigation, not confirmed application failures.
+            </p>
+          </div>
+
         </section>
 
         <!-- =================================
