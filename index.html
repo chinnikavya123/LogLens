@@ -4,26 +4,46 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#0b1020">
-  <title>LogLens — Intelligent Log Analysis</title>
+  <meta name="theme-color" content="#090e1c">
+  <meta name="description" content="LogLens is a privacy-first log analysis platform that helps developers explore errors, detect incidents and investigate application issues.">
+  <title>LogLens — Intelligent Log Analysis Platform</title>
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
   <div class="app-shell">
+
+    <!-- SIDEBAR -->
     <aside class="sidebar" id="sidebar">
       <a class="brand" href="#" aria-label="LogLens home">
         <span class="brand-icon">L</span>
-        <span>Log<span class="brand-light">Lens</span><small>INTELLIGENCE PLATFORM</small></span>
+        <span>
+          Log<span class="brand-light">Lens</span>
+          <small>INTELLIGENCE PLATFORM</small>
+        </span>
       </a>
 
       <div class="side-label">WORKSPACE</div>
-      <nav class="navigation">
-        <button class="nav-link active" data-section="overview"><span>◫</span> Overview</button>
-        <button class="nav-link" data-section="explorer"><span>⌕</span> Log Explorer</button>
-        <button class="nav-link" data-section="incidents"><span>◈</span> Incidents</button>
-        <button class="nav-link" data-section="investigator"><span>✧</span> Root Cause Investigator</button>
-        <button class="nav-link" data-section="compare"><span>⇄</span> Compare Logs</button>
-        <button class="nav-link" data-section="reports"><span>▤</span> Reports</button>
+
+      <nav class="navigation" aria-label="Main navigation">
+        <button class="nav-link active" data-section="overview">
+          <span>◫</span> Overview
+        </button>
+        <button class="nav-link" data-section="explorer">
+          <span>⌕</span> Log Explorer
+        </button>
+        <button class="nav-link" data-section="incidents">
+          <span>◈</span> Incidents
+        </button>
+        <button class="nav-link" data-section="investigator">
+          <span>✧</span> Root Cause Investigator
+        </button>
+        <button class="nav-link" data-section="compare">
+          <span>⇄</span> Compare Logs
+        </button>
+        <button class="nav-link" data-section="reports">
+          <span>▤</span> Reports
+        </button>
       </nav>
 
       <div class="sidebar-bottom">
@@ -33,45 +53,90 @@
           <p>Your logs are processed locally in this browser. Files are not uploaded to a server.</p>
           <span class="privacy-status"><i></i> Local processing</span>
         </div>
+
         <div class="profile">
           <div class="avatar">LL</div>
-          <div><strong>LogLens Workspace</strong><small>Personal workspace</small></div>
+          <div>
+            <strong>LogLens Workspace</strong>
+            <small>Personal workspace</small>
+          </div>
           <span class="profile-menu">•••</span>
         </div>
       </div>
     </aside>
 
+    <!-- MAIN APPLICATION -->
     <main class="main-area">
+
+      <!-- TOPBAR -->
       <header class="topbar">
-        <div class="mobile-brand"><span class="brand-icon">L</span> LogLens</div>
-        <button class="mobile-menu" id="menuToggle" aria-label="Toggle navigation">☰</button>
-        <div class="breadcrumb">Workspace <span>/</span> <strong id="breadcrumbTitle">Overview</strong></div>
+        <div class="mobile-brand">
+          <span class="brand-icon">L</span> LogLens
+        </div>
+
+        <button class="mobile-menu" id="menuToggle" aria-label="Toggle navigation">
+          ☰
+        </button>
+
+        <div class="breadcrumb">
+          Workspace <span>/</span>
+          <strong id="breadcrumbTitle">Overview</strong>
+        </div>
+
         <div class="topbar-right">
-          <span class="system-status"><i></i> Analysis engine ready</span>
-          <button class="icon-button" id="themeToggle" title="Toggle theme">◐</button>
+          <span class="system-status">
+            <i></i> Analysis engine ready
+          </span>
+          <button class="icon-button" id="themeToggle" title="Toggle theme" aria-label="Toggle theme">
+            ◐
+          </button>
         </div>
       </header>
 
       <div class="page-content">
-        <section class="page-section active" id="overview">
+
+        <!-- =================================
+             OVERVIEW
+        ================================== -->
+        <section class="page-section app-section active" id="overview">
+
           <div class="page-heading">
             <div>
               <div class="eyebrow">OBSERVABILITY / OVERVIEW</div>
               <h1>Good day, Developer <span class="wave">✦</span></h1>
-              <p class="subtitle">Your application health at a glance. Let's make sense of your logs.</p>
+              <p class="subtitle">
+                Your application health at a glance. Let's make sense of your logs.
+              </p>
             </div>
-            <button class="primary-button" id="uploadTopButton">＋ Upload logs</button>
+
+            <button class="primary-button" id="uploadTopButton">
+              ＋ Upload logs
+            </button>
           </div>
 
+          <!-- HERO BANNER -->
           <div class="welcome-banner">
             <div class="banner-content">
               <span class="banner-tag">INTELLIGENT LOG ANALYSIS</span>
-              <h2>Every log tells a story.<br><span>Find what matters.</span></h2>
-              <p>Upload your application logs and uncover errors, unusual patterns and possible root causes in seconds.</p>
-              <button class="banner-button" id="bannerUpload">Start analyzing <span>→</span></button>
+
+              <h2>
+                Every log tells a story.<br>
+                <span>Find what matters.</span>
+              </h2>
+
+              <p>
+                Upload your application logs and uncover errors, unusual patterns
+                and possible root causes in seconds.
+              </p>
+
+              <button class="banner-button" id="bannerUpload">
+                Start analyzing <span>→</span>
+              </button>
             </div>
+
             <div class="banner-art" aria-hidden="true">
-              <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
+              <div class="orbit orbit-one"></div>
+              <div class="orbit orbit-two"></div>
               <div class="orb-center">L<span>✦</span></div>
               <div class="floating-code code-one">ERROR 500</div>
               <div class="floating-code code-two">TRACE FOUND</div>
@@ -79,103 +144,516 @@
             </div>
           </div>
 
+          <!-- SYSTEM OVERVIEW -->
           <div class="section-heading">
-            <div><h2>System overview</h2><p>Summary of your current analysis session</p></div>
-            <span class="session-label" id="sessionLabel">Waiting for log files</span>
+            <div>
+              <h2>System overview</h2>
+              <p>Summary of your current analysis session</p>
+            </div>
+            <span class="session-label" id="sessionLabel">
+              Waiting for log files
+            </span>
           </div>
 
           <div class="stats-grid">
-            <article class="stat-card"><div class="stat-top"><span>Total log entries</span><span class="stat-icon blue">▤</span></div><div class="stat-value" id="totalLogs">0</div><div class="stat-foot">Entries analyzed</div></article>
-            <article class="stat-card"><div class="stat-top"><span>Critical issues</span><span class="stat-icon red">!</span></div><div class="stat-value" id="criticalLogs">0</div><div class="stat-foot"><span class="dot red-dot"></span> Requires immediate attention</div></article>
-            <article class="stat-card"><div class="stat-top"><span>Errors detected</span><span class="stat-icon orange">⌁</span></div><div class="stat-value" id="errorLogs">0</div><div class="stat-foot">Application failures</div></article>
-            <article class="stat-card"><div class="stat-top"><span>Warnings</span><span class="stat-icon yellow">⚠</span></div><div class="stat-value" id="warningLogs">0</div><div class="stat-foot">Potential concerns</div></article>
-          </div>
 
-          <div class="dashboard-grid">
-            <article class="panel chart-panel">
-              <div class="panel-heading"><div><h3>Log distribution</h3><p>Breakdown by severity</p></div><span class="live-label">● CURRENT SESSION</span></div>
-              <div class="chart-wrap"><canvas id="distributionChart"></canvas><div class="chart-center"><strong id="chartTotal">0</strong><span>Total logs</span></div></div>
-              <div class="legend" id="chartLegend"><span><i class="legend-dot critical"></i> Critical <b>0</b></span><span><i class="legend-dot error"></i> Error <b>0</b></span><span><i class="legend-dot warning"></i> Warning <b>0</b></span><span><i class="legend-dot info"></i> Info <b>0</b></span></div>
+            <article class="stat-card">
+              <div class="stat-top">
+                <span>Total log entries</span>
+                <span class="stat-icon blue">▤</span>
+              </div>
+              <div class="stat-value" id="totalLogs">0</div>
+              <div class="stat-foot">Entries analyzed</div>
             </article>
-            <article class="panel health-panel">
-              <div class="panel-heading"><div><h3>Application health</h3><p>Based on detected log severity</p></div><span class="health-symbol">⌁</span></div>
-              <div class="health-score"><strong id="healthScore">—</strong><span>/ 100</span></div>
-              <div class="health-track"><div id="healthBar"></div></div>
-              <div class="health-message" id="healthMessage">Upload logs to calculate application health.</div>
-              <div class="health-details"><span>Critical + Errors</span><strong id="failureCount">0</strong></div>
-              <div class="health-details"><span>Warnings</span><strong id="healthWarnings">0</strong></div>
-            </article>
-          </div>
 
-          <div class="dashboard-grid lower-grid">
-            <article class="panel">
-              <div class="panel-heading"><div><h3>Recent log activity</h3><p>Latest entries from your files</p></div><button class="text-button" data-go="explorer">View all →</button></div>
-              <div id="recentLogs" class="recent-list"><div class="empty-state compact">No log activity yet. Upload a file to get started.</div></div>
-            </article>
-            <article class="panel">
-              <div class="panel-heading"><div><h3>Quick actions</h3><p>Jump into your investigation</p></div></div>
-              <div class="quick-actions">
-                <button data-go="explorer"><span class="quick-icon blue">⌕</span><span><strong>Explore logs</strong><small>Search and filter entries</small></span><b>→</b></button>
-                <button data-go="investigator"><span class="quick-icon purple">✧</span><span><strong>Investigate issues</strong><small>Discover likely root causes</small></span><b>→</b></button>
-                <button data-go="compare"><span class="quick-icon orange">⇄</span><span><strong>Compare log files</strong><small>Find changes between files</small></span><b>→</b></button>
-                <button data-go="reports"><span class="quick-icon green">▤</span><span><strong>Generate report</strong><small>Export your findings</small></span><b>→</b></button>
+            <article class="stat-card">
+              <div class="stat-top">
+                <span>Critical issues</span>
+                <span class="stat-icon red">!</span>
+              </div>
+              <div class="stat-value" id="criticalLogs">0</div>
+              <div class="stat-foot">
+                <span class="dot red-dot"></span>
+                Requires immediate attention
               </div>
             </article>
+
+            <article class="stat-card">
+              <div class="stat-top">
+                <span>Errors detected</span>
+                <span class="stat-icon orange">⌁</span>
+              </div>
+              <div class="stat-value" id="errorLogs">0</div>
+              <div class="stat-foot">Application failures</div>
+            </article>
+
+            <article class="stat-card">
+              <div class="stat-top">
+                <span>Warnings</span>
+                <span class="stat-icon yellow">⚠</span>
+              </div>
+              <div class="stat-value" id="warningLogs">0</div>
+              <div class="stat-foot">Potential concerns</div>
+            </article>
+
+          </div>
+
+          <!-- CHARTS -->
+          <div class="dashboard-grid">
+
+            <article class="panel chart-panel">
+              <div class="panel-heading">
+                <div>
+                  <h3>Log distribution</h3>
+                  <p>Breakdown by severity</p>
+                </div>
+                <span class="live-label">● CURRENT SESSION</span>
+              </div>
+
+              <div class="chart-wrap">
+                <canvas id="distributionChart"></canvas>
+                <div class="chart-center">
+                  <strong id="chartTotal">0</strong>
+                  <span>Total logs</span>
+                </div>
+              </div>
+
+              <div class="legend" id="chartLegend">
+                <span><i class="legend-dot critical"></i> Critical <b>0</b></span>
+                <span><i class="legend-dot error"></i> Error <b>0</b></span>
+                <span><i class="legend-dot warning"></i> Warning <b>0</b></span>
+                <span><i class="legend-dot info"></i> Info <b>0</b></span>
+              </div>
+            </article>
+
+            <article class="panel health-panel">
+              <div class="panel-heading">
+                <div>
+                  <h3>Application health</h3>
+                  <p>Based on detected log severity</p>
+                </div>
+                <span class="health-symbol">⌁</span>
+              </div>
+
+              <div class="health-score">
+                <strong id="healthScore">—</strong>
+                <span>/ 100</span>
+              </div>
+
+              <div class="health-track">
+                <div id="healthBar"></div>
+              </div>
+
+              <div class="health-message" id="healthMessage">
+                Upload logs to calculate application health.
+              </div>
+
+              <div class="health-details">
+                <span>Critical + Errors</span>
+                <strong id="failureCount">0</strong>
+              </div>
+
+              <div class="health-details">
+                <span>Warnings</span>
+                <strong id="healthWarnings">0</strong>
+              </div>
+            </article>
+
+          </div>
+
+          <!-- RECENT ACTIVITY AND QUICK ACTIONS -->
+          <div class="dashboard-grid lower-grid">
+
+            <article class="panel">
+              <div class="panel-heading">
+                <div>
+                  <h3>Recent log activity</h3>
+                  <p>Latest entries from your files</p>
+                </div>
+                <button class="text-button" data-go="explorer">
+                  View all →
+                </button>
+              </div>
+
+              <div id="recentLogs" class="recent-list">
+                <div class="empty-state compact">
+                  No log activity yet. Upload a file to get started.
+                </div>
+              </div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-heading">
+                <div>
+                  <h3>Quick actions</h3>
+                  <p>Jump into your investigation</p>
+                </div>
+              </div>
+
+              <div class="quick-actions">
+                <button data-go="explorer">
+                  <span class="quick-icon blue">⌕</span>
+                  <span>
+                    <strong>Explore logs</strong>
+                    <small>Search and filter entries</small>
+                  </span>
+                  <b>→</b>
+                </button>
+
+                <button data-go="investigator">
+                  <span class="quick-icon purple">✧</span>
+                  <span>
+                    <strong>Investigate issues</strong>
+                    <small>Discover likely root causes</small>
+                  </span>
+                  <b>→</b>
+                </button>
+
+                <button data-go="compare">
+                  <span class="quick-icon orange">⇄</span>
+                  <span>
+                    <strong>Compare log files</strong>
+                    <small>Find changes between files</small>
+                  </span>
+                  <b>→</b>
+                </button>
+
+                <button data-go="reports">
+                  <span class="quick-icon green">▤</span>
+                  <span>
+                    <strong>Generate report</strong>
+                    <small>Export your findings</small>
+                  </span>
+                  <b>→</b>
+                </button>
+              </div>
+            </article>
+
           </div>
         </section>
 
-        <section class="page-section" id="explorer">
-          <div class="page-heading"><div><div class="eyebrow">INVESTIGATION / LOG EXPLORER</div><h1>Log Explorer</h1><p class="subtitle">Search, filter and inspect every log entry.</p></div><button class="primary-button" id="explorerUpload">＋ Upload logs</button></div>
-          <div class="panel upload-panel" id="dropZone"><div class="upload-icon">⇧</div><div><h3>Drop your log files here</h3><p>Supports .log and .txt files · Processed locally in your browser</p></div><button class="secondary-button" id="chooseFiles">Browse files</button><input type="file" id="logFiles" accept=".log,.txt,text/plain" multiple hidden></div>
+        <!-- =================================
+             LOG EXPLORER
+        ================================== -->
+        <section class="page-section app-section" id="explorer">
+
+          <div class="page-heading">
+            <div>
+              <div class="eyebrow">INVESTIGATION / LOG EXPLORER</div>
+              <h1>Log Explorer</h1>
+              <p class="subtitle">
+                Search, filter and inspect every log entry.
+              </p>
+            </div>
+
+            <button class="primary-button" id="explorerUpload">
+              ＋ Upload logs
+            </button>
+          </div>
+
+          <div class="panel upload-panel" id="dropZone">
+            <div class="upload-icon">⇧</div>
+            <div>
+              <h3>Drop your log files here</h3>
+              <p>
+                Supports .log and .txt files · Processed locally in your browser
+              </p>
+            </div>
+            <button class="secondary-button" id="chooseFiles">
+              Browse files
+            </button>
+            <input
+              type="file"
+              id="logFiles"
+              accept=".log,.txt,text/plain"
+              multiple
+              hidden
+            >
+          </div>
+
           <div class="toolbar panel">
-            <div class="search-box"><span>⌕</span><input id="searchInput" type="search" placeholder="Search messages, services, levels..."></div>
-            <select id="levelFilter" aria-label="Filter severity"><option value="ALL">All severities</option><option value="CRITICAL">Critical</option><option value="ERROR">Error</option><option value="WARNING">Warning</option><option value="INFO">Info</option></select>
-            <select id="fileFilter" aria-label="Filter file"><option value="ALL">All files</option></select>
-            <label class="mask-toggle"><input type="checkbox" id="maskToggle"> Mask sensitive data</label>
+            <div class="search-box">
+              <span>⌕</span>
+              <input
+                id="searchInput"
+                type="search"
+                placeholder="Search messages, services, levels..."
+              >
+            </div>
+
+            <select id="levelFilter" aria-label="Filter severity">
+              <option value="ALL">All severities</option>
+              <option value="CRITICAL">Critical</option>
+              <option value="ERROR">Error</option>
+              <option value="WARNING">Warning</option>
+              <option value="INFO">Info</option>
+            </select>
+
+            <select id="fileFilter" aria-label="Filter file">
+              <option value="ALL">All files</option>
+            </select>
+
+            <label class="mask-toggle">
+              <input type="checkbox" id="maskToggle">
+              Mask sensitive data
+            </label>
           </div>
+
           <div class="panel table-panel">
-            <div class="table-heading"><div><h3>Log entries</h3><p id="resultCount">0 entries</p></div><button class="text-button" id="clearLogs">Clear session</button></div>
-            <div class="table-scroll"><table><thead><tr><th>SEVERITY</th><th>TIMESTAMP</th><th>SERVICE</th><th>MESSAGE</th><th>FILE</th></tr></thead><tbody id="logTable"><tr><td colspan="5"><div class="empty-state">No logs available. Upload a log file to begin analysis.</div></td></tr></tbody></table></div>
-            <div class="pagination"><span id="pageInfo">Showing 0 entries</span><div><button id="prevPage" disabled>←</button><button id="nextPage" disabled>→</button></div></div>
+            <div class="table-heading">
+              <div>
+                <h3>Log entries</h3>
+                <p id="resultCount">0 results</p>
+              </div>
+              <button class="text-button" id="clearSession">
+                Clear session
+              </button>
+            </div>
+
+            <div class="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>TIMESTAMP</th>
+                    <th>SEVERITY</th>
+                    <th>SERVICE</th>
+                    <th>MESSAGE</th>
+                    <th>FILE</th>
+                  </tr>
+                </thead>
+                <tbody id="logTable">
+                  <tr>
+                    <td colspan="5">
+                      <div class="empty-state">
+                        No logs available. Upload a log file to begin analysis.
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="pagination">
+              <span id="pageInfo">Page 1 of 1</span>
+              <div>
+                <button id="prevPage" disabled>←</button>
+                <button id="nextPage" disabled>→</button>
+              </div>
+            </div>
           </div>
         </section>
 
-        <section class="page-section" id="incidents">
-          <div class="page-heading"><div><div class="eyebrow">INVESTIGATION / EVENT CORRELATION</div><h1>Incident Timeline</h1><p class="subtitle">Follow the sequence of events and spot recurring failures.</p></div></div>
-          <div class="panel incident-summary"><div><span>Detected critical and error events</span><strong id="incidentCount">0</strong></div><div><span>Unique error patterns</span><strong id="patternCount">0</strong></div><div><span>Services affected</span><strong id="serviceCount">0</strong></div></div>
-          <div class="panel timeline-panel"><div class="panel-heading"><div><h3>Event timeline</h3><p>Chronological view of significant events</p></div></div><div id="timelineList"><div class="empty-state">Upload logs to build your incident timeline.</div></div></div>
-          <div class="panel"><div class="panel-heading"><div><h3>Repeated error patterns</h3><p>Messages that occur more than once</p></div></div><div id="patternsList"><div class="empty-state compact">No repeated patterns detected yet.</div></div></div>
+        <!-- =================================
+             INCIDENTS
+        ================================== -->
+        <section class="page-section app-section" id="incidents">
+
+          <div class="page-heading">
+            <div>
+              <div class="eyebrow">INVESTIGATION / EVENT CORRELATION</div>
+              <h1>Incident Timeline</h1>
+              <p class="subtitle">
+                Follow the sequence of events and spot recurring failures.
+              </p>
+            </div>
+          </div>
+
+          <div class="panel incident-summary">
+            <div>
+              <span>Detected critical and error events</span>
+              <strong id="incidentCount">0</strong>
+            </div>
+            <div>
+              <span>Unique error patterns</span>
+              <strong id="patternCount">0</strong>
+            </div>
+            <div>
+              <span>Services affected</span>
+              <strong id="serviceCount">0</strong>
+            </div>
+          </div>
+
+          <div class="panel timeline-panel">
+            <div class="panel-heading">
+              <div>
+                <h3>Event timeline</h3>
+                <p>Chronological view of significant events</p>
+              </div>
+            </div>
+
+            <div id="timelineList">
+              <div class="empty-state">
+                Upload logs to build your incident timeline.
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-heading">
+              <div>
+                <h3>Repeated error patterns</h3>
+                <p>Messages that occur more than once</p>
+              </div>
+            </div>
+
+            <div id="patternsList">
+              <div class="empty-state compact">
+                No repeated patterns detected yet.
+              </div>
+            </div>
+          </div>
         </section>
 
-        <section class="page-section" id="investigator">
-          <div class="page-heading"><div><div class="eyebrow">INTELLIGENCE / ROOT CAUSE ANALYSIS</div><h1>Root Cause Investigator</h1><p class="subtitle">Turn confusing error messages into actionable debugging steps.</p></div><span class="local-badge">RULE-BASED ENGINE</span></div>
-          <div class="investigator-intro"><div class="investigator-orb">✧</div><div><h2>Let's investigate what went wrong.</h2><p>LogLens examines error messages, groups recurring patterns and suggests likely causes with practical next steps.</p></div></div>
-          <div class="panel"><div class="panel-heading"><div><h3>Investigation findings</h3><p>Prioritized issues identified in your logs</p></div><span id="findingCount" class="count-pill">0 findings</span></div><div id="findingsList"><div class="empty-state">Upload logs containing errors to generate investigation findings.</div></div></div>
+        <!-- =================================
+             ROOT CAUSE INVESTIGATOR
+        ================================== -->
+        <section class="page-section app-section" id="investigator">
+
+          <div class="page-heading">
+            <div>
+              <div class="eyebrow">INTELLIGENCE / ROOT CAUSE ANALYSIS</div>
+              <h1>Root Cause Investigator</h1>
+              <p class="subtitle">
+                Turn confusing error messages into actionable debugging steps.
+              </p>
+            </div>
+            <span class="local-badge">RULE-BASED ENGINE</span>
+          </div>
+
+          <div class="investigator-intro">
+            <div class="investigator-orb">✧</div>
+            <div>
+              <h2>Let's investigate what went wrong.</h2>
+              <p>
+                LogLens examines error messages, groups recurring patterns and
+                suggests likely causes with practical next steps.
+              </p>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-heading">
+              <div>
+                <h3>Investigation findings</h3>
+                <p>Prioritized issues identified in your logs</p>
+              </div>
+              <span id="findingCount" class="count-pill">0</span>
+            </div>
+
+            <div id="findingsList">
+              <div class="empty-state">
+                Upload logs containing errors to generate investigation findings.
+              </div>
+            </div>
+          </div>
         </section>
 
-        <section class="page-section" id="compare">
-          <div class="page-heading"><div><div class="eyebrow">ANALYSIS / CHANGE DETECTION</div><h1>Compare Logs</h1><p class="subtitle">Compare two log files to discover new and changed issues.</p></div></div>
+        <!-- =================================
+             COMPARE LOGS
+        ================================== -->
+        <section class="page-section app-section" id="compare">
+
+          <div class="page-heading">
+            <div>
+              <div class="eyebrow">ANALYSIS / CHANGE DETECTION</div>
+              <h1>Compare Logs</h1>
+              <p class="subtitle">
+                Compare two log files to discover new and changed issues.
+              </p>
+            </div>
+          </div>
+
           <div class="compare-grid">
-            <div class="panel compare-upload"><span class="compare-number">FILE A</span><h3>Baseline log</h3><p>Choose your original or earlier log file.</p><label class="file-picker">＋ Choose first file<input type="file" id="compareFileA" accept=".log,.txt"></label><div id="fileAName" class="file-name">No file selected</div></div>
+
+            <div class="panel compare-upload">
+              <span class="compare-number">FILE A</span>
+              <h3>Baseline log</h3>
+              <p>Choose your original or earlier log file.</p>
+
+              <label class="file-picker">
+                ＋ Choose first file
+                <input type="file" id="compareFileA" accept=".log,.txt">
+              </label>
+
+              <div id="compareNameA" class="file-name">
+                No file selected
+              </div>
+            </div>
+
             <div class="compare-middle">VS</div>
-            <div class="panel compare-upload"><span class="compare-number">FILE B</span><h3>Updated log</h3><p>Choose the newer log file for comparison.</p><label class="file-picker">＋ Choose second file<input type="file" id="compareFileB" accept=".log,.txt"></label><div id="fileBName" class="file-name">No file selected</div></div>
+
+            <div class="panel compare-upload">
+              <span class="compare-number">FILE B</span>
+              <h3>Updated log</h3>
+              <p>Choose the newer log file for comparison.</p>
+
+              <label class="file-picker">
+                ＋ Choose second file
+                <input type="file" id="compareFileB" accept=".log,.txt">
+              </label>
+
+              <div id="compareNameB" class="file-name">
+                No file selected
+              </div>
+            </div>
+
           </div>
-          <button class="primary-button compare-button" id="runCompare">Compare files →</button>
+
+          <button class="primary-button compare-button" id="runCompare">
+            Compare files →
+          </button>
+
           <div id="compareResults"></div>
         </section>
 
-        <section class="page-section" id="reports">
-          <div class="page-heading"><div><div class="eyebrow">EXPORT / INVESTIGATION REPORTS</div><h1>Analysis Reports</h1><p class="subtitle">Create a shareable summary of your current investigation.</p></div></div>
-          <div class="panel report-preview"><div class="report-icon">▤</div><div><h2>LogLens Analysis Report</h2><p>Your report includes severity distribution, application health, repeated errors, incident findings and suggested actions.</p><div class="report-meta" id="reportMeta">No analysis session available</div></div></div>
+        <!-- =================================
+             REPORTS
+        ================================== -->
+        <section class="page-section app-section" id="reports">
+
+          <div class="page-heading">
+            <div>
+              <div class="eyebrow">EXPORT / INVESTIGATION REPORTS</div>
+              <h1>Analysis Reports</h1>
+              <p class="subtitle">
+                Create a shareable summary of your current investigation.
+              </p>
+            </div>
+          </div>
+
+          <div class="panel report-preview">
+            <div class="report-icon">▤</div>
+            <div>
+              <h2>LogLens Analysis Report</h2>
+              <p>
+                Your report includes severity distribution, application health,
+                repeated errors, incident findings and suggested actions.
+              </p>
+              <div class="report-meta" id="reportMeta">
+                No analysis session available
+              </div>
+            </div>
+          </div>
+
           <div class="report-stats" id="reportStats"></div>
-          <button class="primary-button" id="downloadReport">↓ Download report (.txt)</button>
+
+          <button class="primary-button" id="downloadReport">
+            ↓ Download report (.txt)
+          </button>
         </section>
 
-        <footer class="footer"><span>© 2026 LogLens · Intelligent Log Analysis</span><span>Built for developers, by developers.</span></footer>
+        <!-- FOOTER -->
+        <footer class="footer">
+          <span>© 2026 LogLens · Intelligent Log Analysis</span>
+          <span>Built for developers, by developers.</span>
+        </footer>
+
       </div>
     </main>
   </div>
-  <div id="toast" class="toast" role="status"></div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
   <script src="script.js"></script>
 </body>
 </html>
