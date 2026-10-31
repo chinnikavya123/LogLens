@@ -512,3 +512,329 @@ body.light-theme tbody tr:hover {
     transition-duration: .01ms !important;
   }
 }
+
+
+/* ==========================================
+   LOGLENS — INTELLIGENT ANOMALY DETECTION
+   ========================================== */
+
+.anomaly-intro {
+  background:
+    radial-gradient(circle at 90% 50%, #9275ff24, transparent 35%),
+    linear-gradient(110deg, #211e45, #151b32);
+  border-color: #6255a5;
+  position: relative;
+  overflow: hidden;
+}
+
+.anomaly-intro::after {
+  content: "";
+  position: absolute;
+  width: 180px;
+  height: 180px;
+  border: 1px solid #9275ff20;
+  border-radius: 50%;
+  right: 8%;
+  top: -65px;
+  box-shadow: 0 0 0 25px #9275ff08,
+              0 0 0 50px #9275ff05;
+  pointer-events: none;
+}
+
+.anomaly-stats .stat-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.anomaly-stats .stat-card::after {
+  content: "";
+  position: absolute;
+  width: 65px;
+  height: 65px;
+  right: -22px;
+  bottom: -28px;
+  border-radius: 50%;
+  background: #9275ff0b;
+}
+
+.anomaly-method-panel {
+  margin-bottom: 17px;
+}
+
+.anomaly-method-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 13px;
+}
+
+.anomaly-method-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 15px;
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  transition: .2s ease;
+}
+
+.anomaly-method-item:hover {
+  border-color: var(--purple);
+  transform: translateY(-2px);
+}
+
+.method-icon {
+  width: 34px;
+  height: 34px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  font-size: 18px;
+}
+
+.anomaly-method-item strong {
+  display: block;
+  font-size: 11px;
+  margin: 2px 0 7px;
+}
+
+.anomaly-method-item p {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.7;
+  margin: 0;
+}
+
+.anomaly-results-panel {
+  margin-bottom: 16px;
+}
+
+.anomaly-results-panel .panel-heading {
+  margin-bottom: 12px;
+}
+
+.anomaly-empty {
+  text-align: center;
+  padding: 42px 15px;
+  color: var(--muted);
+}
+
+.anomaly-empty-icon {
+  width: 54px;
+  height: 54px;
+  display: grid;
+  place-items: center;
+  margin: 0 auto 14px;
+  border-radius: 16px;
+  background: #9275ff17;
+  color: #ae9aff;
+  font-size: 26px;
+}
+
+.anomaly-empty strong {
+  display: block;
+  color: var(--text);
+  font-size: 12px;
+  margin-bottom: 7px;
+}
+
+.anomaly-empty p {
+  font-size: 10px;
+  line-height: 1.7;
+  margin: 0;
+}
+
+.anomaly-card {
+  padding: 17px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel2);
+  margin-top: 11px;
+  transition: .2s ease;
+  animation: fadeIn .3s ease;
+}
+
+.anomaly-card:hover {
+  border-color: #6255a5;
+  transform: translateY(-2px);
+}
+
+.anomaly-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 11px;
+}
+
+.anomaly-card-title {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+
+.anomaly-card-title h4 {
+  font-size: 12px;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.anomaly-severity {
+  flex: none;
+  padding: 5px 8px;
+  border-radius: 5px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .5px;
+}
+
+.anomaly-severity.high {
+  background: #ff687c20;
+  color: var(--red);
+}
+
+.anomaly-severity.medium {
+  background: #ff9d6920;
+  color: var(--orange);
+}
+
+.anomaly-severity.low {
+  background: #f3ca6920;
+  color: var(--yellow);
+}
+
+.anomaly-card-description {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.7;
+  margin: 0 0 13px;
+}
+
+.anomaly-card-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px 18px;
+  padding-top: 11px;
+  border-top: 1px solid var(--border);
+}
+
+.anomaly-card-details span {
+  color: var(--faint);
+  font-size: 10px;
+}
+
+.anomaly-card-details strong {
+  color: var(--text);
+  font-weight: 600;
+  margin-left: 4px;
+}
+
+.anomaly-recommendation {
+  padding: 11px 12px;
+  margin-top: 12px;
+  border-radius: 7px;
+  background: #43d6a00c;
+  border: 1px solid #43d6a01c;
+  color: var(--green);
+  font-size: 10px;
+  line-height: 1.7;
+}
+
+.anomaly-recommendation strong {
+  display: block;
+  margin-bottom: 3px;
+}
+
+.anomaly-disclaimer {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px 16px;
+  background: #62a6ff0b;
+  border: 1px solid #62a6ff20;
+  border-radius: 9px;
+  color: var(--blue);
+}
+
+.anomaly-disclaimer>span {
+  font-size: 16px;
+  flex: none;
+}
+
+.anomaly-disclaimer p {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.7;
+  margin: 0;
+}
+
+/* Anomaly detection button state */
+#runAnomalyDetection {
+  white-space: nowrap;
+}
+
+#runAnomalyDetection:disabled {
+  opacity: .65;
+  cursor: wait;
+  transform: none;
+}
+
+/* Light theme */
+body.light-theme .anomaly-intro {
+  color: #edf2ff;
+}
+
+body.light-theme .anomaly-intro p {
+  color: #c3c7dd;
+}
+
+body.light-theme .anomaly-method-item {
+  background: #f7f8fc;
+}
+
+body.light-theme .anomaly-card {
+  background: #f7f8fc;
+}
+
+body.light-theme .anomaly-disclaimer {
+  background: #eff6ff;
+}
+
+/* Responsive anomaly detection layout */
+@media (max-width: 900px) {
+  .anomaly-method-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .anomaly-method-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .anomaly-card-top {
+    align-items: flex-start;
+  }
+
+  .anomaly-card-details {
+    gap: 10px;
+  }
+
+  .anomaly-intro {
+    align-items: flex-start;
+  }
+
+  .anomaly-intro::after {
+    right: -100px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .anomaly-card,
+  .anomaly-method-item {
+    animation: none;
+    transition: none;
+  }
+}
