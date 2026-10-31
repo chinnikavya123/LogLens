@@ -1,669 +1,1324 @@
 
-const $ = id => document.getElementById(id);
+"use strict";
 
-let logs = [];
-let currentPage = 1;
-const pageSize = 12;
-let compareA = null;
-let compareB = null;
-let toastTimer;
+/* =========================================
+   LOGLENS — APPLICATION LOGIC
+========================================= */
 
-const severityOrder = {CRITICAL:0,ERROR:1,WARNING:2,INFO:3};
-const colors = {
-  CRITICAL:"#ff5576",ERROR:"#ff9867",WARNING:"#f2c96b",INFO:"#648dff"
+const $ = (id) => document.getElementById(id);
+
+const state = {
+  logs: [],
+  currentPage: 1,
+  pageSize: 12,
+  compareA: [],
+  compareB: [],
+  toastTimer: null
 };
 
-function notify(message) {
+const severityOrder = {
+  CRITICAL: 0,
+  ERROR: 1,
+  WARNING: 2,
+  INFO: 3
+};
+
+const severityColors = {
+  CRITICAL: "#ff526f",
+  ERROR: "#ff806d",
+  WARNING: "#f4bd62",
+  INFO: "#65a9ff"
+};
+
+const sectionTitles = {
+  overview: "Overview",
+  explorer: "Log Explorer",
+  incidents: "Incident Center",
+  investigator: "Root Cause Investigator",
+  compare: "Log Comparison",
+  reports: "Reports"
+};
+
+/* =========================================
+   GENERAL HELPERS
+========================================= */
+
+function notify(message, type = "success") {
   const toast = $("toast");
+  if (!toast) return;
+
   toast.textContent = message;
-  toast.classList.add("show");
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => toast.classList.remove("show"),2800);
+  toast.className = `toast show ${type}`;
+
+  clearTimeout(state.toastTimer);
+
+  state.toastTimer = setTimeout(() => {
+    toast.className = "toast";
+  }, 3200);
 }
 
-function classify(message) {
-  const text = message.toLowerCase();
+function escapeHTML(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;"
+  })[char]);
+}
 
-  if (/\b(fatal|critical|emergency|panic|out of memory|database corruption)\b/.test(text)) return "CRITICAL";
-  if (/\b(error|exception|failed|failure|traceback|refused|denied|timeout|500|502|503|504)\b/.test(text)) return "ERROR";
-  if (/\b(warn|warning|deprecated|retry|slow|unavailable|rate limit)\b/.test(text)) return "WARNING";
+function formatNumber(value) {
+  return Number(value || 0).toLocaleString();
+}
+
+function formatTime(date) {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+    return "Unknown time";
+  }
+
+  return date.toLocaleString([], {
+    month: "short",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit"
+  });
+}
+
+function getFileName(file) {
+  return file?.name || "unknown.log";
+}
+
+/* =========================================
+   LOG CLASSIFICATION
+========================================= */
+
+function classify(message) {
+  const text = String(message || "");
+
+  // Explicit severity labels take priority.
+  const explicit = text.match(
+    /\b(CRITICAL|FATAL|SEVERE|ERROR|ERR|WARNING|WARN|INFO|INFORMATIONAL|DEBUG|TRACE)\b/i
+  );
+
+  if (explicit) {
+    const level = explicit[1].toUpperCase();
+
+    if (["CRITICAL", "FATAL", "SEVERE"].includes(level)) {
+      return "CRITICAL";
+    }
+
+    if (["ERROR", "ERR"].includes(level)) {
+      return "ERROR";
+    }
+
+    if (["WARNING", "WARN"].includes(level)) {
+      return "WARNING";
+    }
+
+    return "INFO";
+  }
+
+  if (
+    /\b(out of memory|outofmemory|fatal|panic|unrecoverable|segmentation fault)\b/i.test(text)
+  ) {
+    return "CRITICAL";
+  }
+
+  if (
+    /\b(exception|failed|failure|error|timeout|timed out|refused|denied)\b/i.test(text)
+  ) {
+    return "ERROR";
+  }
+
+  if (
+    /\b(retry|slow|deprecated|warning|threshold exceeded|high latency)\b/i.test(text)
+  ) {
+    return "WARNING";
+  }
+
   return "INFO";
 }
 
-function extractTimestamp(line) {
-  const match = line.match(/\b\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?/);
-  if (!match) return null;
+/* =========================================
+   TIMESTAMP AND SERVICE EXTRACTION
+========================================= */
 
-  const date = new Date(match[0].replace(" ","T"));
-  return Number.isNaN(date.getTime()) ? null : date;
+function extractTimestamp(line) {
+  const patterns = [
+    /\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?/,
+    /\d{4}\/\d{2}\/\d{2}[ T]\d{2}:\d{2}:\d{2}/,
+    /\d{2}-\d{2}-\d{4}[ T]\d{2}:\d{2}:\d{2}/
+  ];
+
+  for (const pattern of patterns) {
+    const match = line.match(pattern);
+
+    if (match) {
+      const parsed = new Date(match[0]);
+
+      if (!Number.isNaN(parsed.getTime())) {
+        return parsed;
+      }
+    }
+  }
+
+  return new Date();
 }
 
 function extractService(line) {
   const patterns = [
-    /\bservice[=: ]+([a-zA-Z0-9_.-]+)/i,
-    /\bmodule[=: ]+([a-zA-Z0-9_.-]+)/i,
+    /\bservice[=: ]+["']?([a-zA-Z0-9_.-]+)/i,
+    /\bmodule[=: ]+["']?([a-zA-Z0-9_.-]+)/i,
+    /\bcomponent[=: ]+["']?([a-zA-Z0-9_.-]+)/i,
     /\[([a-zA-Z0-9_.-]+)\]/
   ];
 
   for (const pattern of patterns) {
     const match = line.match(pattern);
-    if (match) return match[1];
-  }
 
-  const common = line.match(/\b(api|auth|database|db|server|payment|frontend|backend|worker|gateway|cache|nginx|mysql|mongodb|redis)\b/i);
-  return common ? common[1] : "Application";
-}
-
-function parseLogs(content, fileName) {
-  const lines = content.split(/\r?\n/).filter(line => line.trim());
-  const parsed = [];
-
-  lines.forEach((line,index) => {
-    const timestamp = extractTimestamp(line);
-    const levelMatch = line.match(/\b(critical|fatal|emergency|panic|error|err|warning|warn|info|debug|trace)\b/i);
-    const severity = classify(line);
-
-    parsed.push({
-      id: `${fileName}-${Date.now()}-${index}`,
-      timestamp,
-      timeLabel: timestamp ? timestamp.toLocaleString() : `Line ${index+1}`,
-      service: extractService(line),
-      severity,
-      message: line.trim(),
-      file: fileName,
-      lineNumber: index+1
-    });
-  });
-
-  return parsed;
-}
-
-async function handleFiles(files) {
-  const selected = Array.from(files).filter(file =>
-    /\.(log|txt)$/i.test(file.name) || file.type === "text/plain"
-  );
-
-  if (!selected.length) {
-    notify("Please select a .log or .txt file.");
-    return;
-  }
-
-  for (const file of selected) {
-    try {
-      const content = await file.text();
-      const parsed = parseLogs(content,file.name);
-      logs.push(...parsed);
-      notify(`${file.name}: ${parsed.length} entries analyzed.`);
-    } catch {
-      notify(`Could not read ${file.name}.`);
+    if (match) {
+      return match[1];
     }
   }
 
-  currentPage = 1;
-  refreshDashboard();
-  renderExplorer();
-  renderIncidents();
-  renderFindings();
-  renderReport();
-  updateFileFilter();
+  return "Application";
 }
 
-function getMaskedMessage(message) {
-  if (!$("maskToggle").checked) return message;
+/* =========================================
+   LOG PARSING
+========================================= */
 
-  return message
-    .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi,"[EMAIL REDACTED]")
-    .replace(/\b(?:Bearer\s+)?(?:sk-[A-Za-z0-9_-]{12,}|gh[pousr]_[A-Za-z0-9_]{12,}|AKIA[A-Z0-9]{16})\b/g,"[TOKEN REDACTED]")
-    .replace(/((?:api[_-]?key|token|password|secret)\s*[=:]\s*)["']?[^ "';,]+/gi,"$1[REDACTED]");
+function parseLogs(text, fileName) {
+  return String(text)
+    .split(/\r?\n/)
+    .filter((line) => line.trim())
+    .map((line, index) => {
+      const level = classify(line);
+
+      return {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2)}-${index}`,
+        timestamp: extractTimestamp(line),
+        level,
+        service: extractService(line),
+        message: line.trim(),
+        file: fileName,
+        lineNumber: index + 1
+      };
+    });
 }
 
-function getStats() {
-  const stats = {CRITICAL:0,ERROR:0,WARNING:0,INFO:0};
-  logs.forEach(log => stats[log.severity]++);
+async function handleFiles(fileList) {
+  const files = Array.from(fileList || []);
+
+  if (!files.length) return;
+
+  const supported = files.filter((file) =>
+    /\.(log|txt)$/i.test(file.name)
+  );
+
+  if (!supported.length) {
+    notify("Please select .log or .txt files.", "error");
+    return;
+  }
+
+  let added = 0;
+
+  for (const file of supported) {
+    try {
+      const text = await file.text();
+      const parsed = parseLogs(text, file.name);
+
+      state.logs.push(...parsed);
+      added += parsed.length;
+    } catch (error) {
+      console.error("File reading error:", error);
+      notify(`Could not read ${file.name}.`, "error");
+    }
+  }
+
+  state.currentPage = 1;
+  refreshAll();
+
+  if (added) {
+    notify(`${formatNumber(added)} log entries imported successfully.`);
+  } else {
+    notify("No readable log entries were found.", "error");
+  }
+}
+
+/* =========================================
+   SENSITIVE DATA MASKING
+========================================= */
+
+function maskSensitiveData(message) {
+  let text = String(message || "");
+
+  text = text.replace(
+    /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi,
+    "[REDACTED_EMAIL]"
+  );
+
+  text = text.replace(
+    /\b(Bearer\s+)[A-Za-z0-9._~+/=-]+/gi,
+    "$1[REDACTED]"
+  );
+
+  text = text.replace(
+    /\b(api[_-]?key|access[_-]?token|auth[_-]?token|password|passwd|secret)\s*[:=]\s*["']?[^"',\s;]+/gi,
+    "$1=[REDACTED]"
+  );
+
+  text = text.replace(
+    /\b(sk-[A-Za-z0-9_-]{12,})\b/g,
+    "[REDACTED_KEY]"
+  );
+
+  return text;
+}
+
+function getDisplayedMessage(message) {
+  return $("maskToggle")?.checked
+    ? maskSensitiveData(message)
+    : message;
+}
+
+/* =========================================
+   STATISTICS AND HEALTH SCORE
+========================================= */
+
+function getStats(logs = state.logs) {
+  const stats = {
+    total: logs.length,
+    CRITICAL: 0,
+    ERROR: 0,
+    WARNING: 0,
+    INFO: 0
+  };
+
+  logs.forEach((log) => {
+    stats[log.level] = (stats[log.level] || 0) + 1;
+  });
+
   return stats;
 }
 
 function getHealth(stats) {
-  if (!logs.length) return null;
-  const score = 100 - (stats.CRITICAL * 15 + stats.ERROR * 8 + stats.WARNING * 2) / logs.length * 10;
-  return Math.max(0,Math.min(100,Math.round(score)));
+  if (!stats.total) return 100;
+
+  const weightedIssues =
+    stats.CRITICAL * 4 +
+    stats.ERROR * 2 +
+    stats.WARNING;
+
+  const maximumWeight = stats.total * 4;
+  const issueRatio = weightedIssues / maximumWeight;
+
+  return Math.max(0, Math.round(100 - issueRatio * 100));
 }
 
-function refreshDashboard() {
+function updateStats() {
   const stats = getStats();
-  const health = getHealth(stats);
 
-  $("totalLogs").textContent = logs.length.toLocaleString();
-  $("criticalLogs").textContent = stats.CRITICAL.toLocaleString();
-  $("errorLogs").textContent = stats.ERROR.toLocaleString();
-  $("warningLogs").textContent = stats.WARNING.toLocaleString();
-  $("chartTotal").textContent = logs.length.toLocaleString();
-  $("failureCount").textContent = stats.CRITICAL + stats.ERROR;
-  $("healthWarnings").textContent = stats.WARNING;
-  $("sessionLabel").textContent = logs.length ? `${logs.length} entries analyzed` : "Waiting for log files";
-  $("healthScore").textContent = health === null ? "—" : health;
-  $("healthBar").style.width = `${health || 0}%`;
+  if ($("totalLogs")) {
+    $("totalLogs").textContent = formatNumber(stats.total);
+  }
 
-  $("healthMessage").textContent = health === null
-    ? "Upload logs to calculate application health."
-    : health >= 90 ? "Healthy — few issues detected."
-    : health >= 70 ? "Fair — some issues need attention."
-    : health >= 40 ? "Unstable — investigate detected errors."
-    : "Critical — immediate investigation recommended.";
+  if ($("criticalLogs")) {
+    $("criticalLogs").textContent = formatNumber(stats.CRITICAL);
+  }
 
-  $("healthMessage").style.color = health === null ? "var(--muted)" : health >= 70 ? "var(--green)" : "var(--red)";
+  if ($("errorLogs")) {
+    $("errorLogs").textContent = formatNumber(stats.ERROR);
+  }
 
-  $("chartLegend").innerHTML = Object.entries(stats).map(([level,count]) =>
-    `<span><i class="legend-dot ${level.toLowerCase()}"></i>${level.charAt(0)+level.slice(1).toLowerCase()} <b>${count}</b></span>`
-  ).join("");
+  if ($("warningLogs")) {
+    $("warningLogs").textContent = formatNumber(stats.WARNING);
+  }
 
-  drawChart(stats);
-  renderRecent();
-  $("incidentCount").textContent = stats.CRITICAL + stats.ERROR;
-  $("patternCount").textContent = getPatterns().length;
-  $("serviceCount").textContent = new Set(logs.map(log => log.service)).size;
+  const score = getHealth(stats);
+
+  if ($("healthScore")) {
+    $("healthScore").textContent = `${score}%`;
+  }
+
+  if ($("healthBar")) {
+    $("healthBar").style.width = `${score}%`;
+  }
+
+  if ($("healthMessage")) {
+    $("healthMessage").textContent =
+      stats.total === 0
+        ? "Upload logs to calculate system health."
+        : score >= 85
+          ? "Your logs indicate a healthy application."
+          : score >= 60
+            ? "Some issues need your attention."
+            : "Significant errors detected. Investigate immediately.";
+  }
+
+  if ($("failureCount")) {
+    $("failureCount").textContent =
+      formatNumber(stats.CRITICAL + stats.ERROR);
+  }
+
+  if ($("healthWarnings")) {
+    $("healthWarnings").textContent =
+      formatNumber(stats.WARNING);
+  }
+
+  if ($("chartTotal")) {
+    $("chartTotal").textContent = formatNumber(stats.total);
+  }
+
+  renderChart(stats);
 }
 
-function drawChart(stats) {
+/* =========================================
+   DISTRIBUTION CHART
+========================================= */
+
+function renderChart(stats) {
   const canvas = $("distributionChart");
+  if (!canvas) return;
+
   const ctx = canvas.getContext("2d");
-  const ratio = window.devicePixelRatio || 1;
   const size = 190;
+  const dpr = window.devicePixelRatio || 1;
 
-  canvas.width = size * ratio;
-  canvas.height = size * ratio;
-  ctx.scale(ratio,ratio);
-  ctx.clearRect(0,0,size,size);
+  canvas.width = size * dpr;
+  canvas.height = size * dpr;
+  canvas.style.width = `${size}px`;
+  canvas.style.height = `${size}px`;
 
-  const total = Object.values(stats).reduce((a,b)=>a+b,0);
-  const entries = Object.entries(stats);
-  let angle = -Math.PI/2;
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, size, size);
+
+  const values = [
+    { name: "Critical", value: stats.CRITICAL, color: severityColors.CRITICAL },
+    { name: "Error", value: stats.ERROR, color: severityColors.ERROR },
+    { name: "Warning", value: stats.WARNING, color: severityColors.WARNING },
+    { name: "Info", value: stats.INFO, color: severityColors.INFO }
+  ];
+
+  const total = values.reduce((sum, item) => sum + item.value, 0);
 
   if (!total) {
     ctx.beginPath();
-    ctx.arc(95,95,69,0,Math.PI*2);
-    ctx.strokeStyle = "#26334a";
+    ctx.arc(95, 95, 68, 0, Math.PI * 2);
+    ctx.strokeStyle = "#29364d";
     ctx.lineWidth = 17;
     ctx.stroke();
+  } else {
+    let start = -Math.PI / 2;
+
+    values.forEach((item) => {
+      if (!item.value) return;
+
+      const angle = (item.value / total) * Math.PI * 2;
+
+      ctx.beginPath();
+      ctx.arc(95, 95, 68, start, start + angle);
+      ctx.strokeStyle = item.color;
+      ctx.lineWidth = 17;
+      ctx.lineCap = "round";
+      ctx.stroke();
+
+      start += angle;
+    });
+  }
+
+  const legend = $("chartLegend");
+
+  if (legend) {
+    legend.innerHTML = values.map((item) => `
+      <div class="legend-item">
+        <span class="legend-dot" style="background:${item.color}"></span>
+        <span>${item.name}</span>
+        <strong>${formatNumber(item.value)}</strong>
+      </div>
+    `).join("");
+  }
+}
+
+/* =========================================
+   RECENT LOGS
+========================================= */
+
+function renderRecent() {
+  const container = $("recentLogs");
+  if (!container) return;
+
+  const recent = [...state.logs]
+    .sort((a, b) => b.timestamp - a.timestamp)
+    .slice(0, 6);
+
+  if (!recent.length) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <span>No logs available yet.</span>
+        <p>Upload a log file to see recent activity.</p>
+      </div>
+    `;
     return;
   }
 
-  entries.forEach(([level,count]) => {
-    if (!count) return;
-    const next = angle + count / total * Math.PI * 2;
-    ctx.beginPath();
-    ctx.arc(95,95,69,angle,next);
-    ctx.strokeStyle = colors[level];
-    ctx.lineWidth = 17;
-    ctx.lineCap = "butt";
-    ctx.stroke();
-    angle = next;
-  });
-}
-
-function renderRecent() {
-  const recent = [...logs].reverse().slice(0,5);
-  $("recentLogs").innerHTML = recent.length ? recent.map(log => `
-    <div class="recent-item">
-      <span class="badge badge-${log.severity}">${log.severity}</span>
-      <div><p title="${escapeHTML(log.message)}">${escapeHTML(getMaskedMessage(log.message))}</p>
-      <small>${escapeHTML(log.service)} · ${escapeHTML(log.timeLabel)}</small></div>
+  container.innerHTML = recent.map((log) => `
+    <div class="recent-log-item">
+      <span class="severity-dot ${log.level.toLowerCase()}"></span>
+      <div class="recent-log-content">
+        <strong>${escapeHTML(log.service)}</strong>
+        <p>${escapeHTML(getDisplayedMessage(log.message))}</p>
+      </div>
+      <span class="recent-log-time">${escapeHTML(formatTime(log.timestamp))}</span>
     </div>
-  `).join("") : `<div class="empty-state compact">No log activity yet. Upload a file to get started.</div>`;
+  `).join("");
 }
 
-function escapeHTML(value) {
-  return String(value).replace(/[&<>"']/g,char => ({
-    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
-  })[char]);
+/* =========================================
+   LOG EXPLORER
+========================================= */
+
+function getFilteredLogs() {
+  const search = ($("searchInput")?.value || "").toLowerCase().trim();
+  const level = $("levelFilter")?.value || "ALL";
+  const file = $("fileFilter")?.value || "ALL";
+
+  return state.logs.filter((log) => {
+    const matchesSearch =
+      !search ||
+      log.message.toLowerCase().includes(search) ||
+      log.service.toLowerCase().includes(search) ||
+      log.file.toLowerCase().includes(search);
+
+    const matchesLevel =
+      level === "ALL" || log.level === level;
+
+    const matchesFile =
+      file === "ALL" || log.file === file;
+
+    return matchesSearch && matchesLevel && matchesFile;
+  }).sort((a, b) => b.timestamp - a.timestamp);
 }
 
 function updateFileFilter() {
   const select = $("fileFilter");
-  const current = select.value;
-  const files = [...new Set(logs.map(log => log.file))];
+  if (!select) return;
 
-  select.innerHTML = `<option value="ALL">All files</option>` +
-    files.map(file => `<option value="${escapeHTML(file)}">${escapeHTML(file)}</option>`).join("");
+  const previous = select.value;
 
-  if (files.includes(current)) select.value = current;
-}
+  const files = [...new Set(state.logs.map((log) => log.file))];
 
-function getFilteredLogs() {
-  const query = $("searchInput").value.toLowerCase().trim();
-  const level = $("levelFilter").value;
-  const file = $("fileFilter").value;
+  select.innerHTML = `
+    <option value="ALL">All files</option>
+    ${files.map((file) => `
+      <option value="${escapeHTML(file)}">${escapeHTML(file)}</option>
+    `).join("")}
+  `;
 
-  return logs.filter(log =>
-    (level === "ALL" || log.severity === level) &&
-    (file === "ALL" || log.file === file) &&
-    (!query || `${log.message} ${log.service} ${log.file} ${log.severity}`.toLowerCase().includes(query))
-  );
+  if (files.includes(previous)) {
+    select.value = previous;
+  }
 }
 
 function renderExplorer() {
-  const filtered = getFilteredLogs();
-  const totalPages = Math.max(1,Math.ceil(filtered.length/pageSize));
-  currentPage = Math.min(currentPage,totalPages);
+  const table = $("logTable");
+  if (!table) return;
 
-  const start = (currentPage-1)*pageSize;
-  const pageLogs = filtered.slice(start,start+pageSize);
+  const logs = getFilteredLogs();
+  const totalPages = Math.max(1, Math.ceil(logs.length / state.pageSize));
 
-  $("resultCount").textContent = `${filtered.length} matching entries`;
-  $("pageInfo").textContent = filtered.length
-    ? `Showing ${start+1}–${Math.min(start+pageSize,filtered.length)} of ${filtered.length}`
-    : "Showing 0 entries";
+  state.currentPage = Math.min(state.currentPage, totalPages);
 
-  $("prevPage").disabled = currentPage <= 1;
-  $("nextPage").disabled = currentPage >= totalPages;
+  const start = (state.currentPage - 1) * state.pageSize;
+  const visible = logs.slice(start, start + state.pageSize);
 
-  $("logTable").innerHTML = pageLogs.length ? pageLogs.map(log => `
+  if ($("resultCount")) {
+    $("resultCount").textContent = `${formatNumber(logs.length)} results`;
+  }
+
+  if ($("pageInfo")) {
+    $("pageInfo").textContent =
+      `Page ${state.currentPage} of ${totalPages}`;
+  }
+
+  if ($("prevPage")) {
+    $("prevPage").disabled = state.currentPage <= 1;
+  }
+
+  if ($("nextPage")) {
+    $("nextPage").disabled = state.currentPage >= totalPages;
+  }
+
+  if (!visible.length) {
+    table.innerHTML = `
+      <tr>
+        <td colspan="5" class="empty-state">
+          No matching logs found.
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  table.innerHTML = visible.map((log) => `
     <tr>
-      <td><span class="badge badge-${log.severity}">${log.severity}</span></td>
-      <td>${escapeHTML(log.timeLabel)}</td>
+      <td>${escapeHTML(formatTime(log.timestamp))}</td>
+      <td>
+        <span class="severity-badge ${log.level.toLowerCase()}">
+          ${log.level}
+        </span>
+      </td>
       <td>${escapeHTML(log.service)}</td>
-      <td class="message-cell" title="${escapeHTML(getMaskedMessage(log.message))}">${escapeHTML(getMaskedMessage(log.message))}</td>
+      <td class="log-message-cell">${escapeHTML(getDisplayedMessage(log.message))}</td>
       <td>${escapeHTML(log.file)}</td>
     </tr>
-  `).join("") : `<tr><td colspan="5"><div class="empty-state">No matching logs found.</div></td></tr>`;
+  `).join("");
+}
+
+/* =========================================
+   INCIDENT DETECTION
+========================================= */
+
+function normalizeMessage(message) {
+  return String(message)
+    .toLowerCase()
+    .replace(/\b\d{4}-\d{2}-\d{2}[t ]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:z)?\b/g, "[time]")
+    .replace(/\b\d+\b/g, "[number]")
+    .replace(/\b[0-9a-f]{8,}\b/g, "[id]")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function getPatterns() {
   const groups = new Map();
 
-  logs.filter(log => ["CRITICAL","ERROR"].includes(log.severity)).forEach(log => {
-    const key = log.message
-      .replace(/\d{4}-\d{2}-\d{2}T?\d{0,2}:?\d{0,2}:?\d{0,2}/g,"[TIME]")
-      .replace(/\b\d+\b/g,"[N]")
-      .trim()
-      .slice(0,160);
+  state.logs
+    .filter((log) => ["CRITICAL", "ERROR"].includes(log.level))
+    .forEach((log) => {
+      const key = normalizeMessage(log.message);
 
-    if (!groups.has(key)) groups.set(key,[]);
-    groups.get(key).push(log);
-  });
+      if (!groups.has(key)) {
+        groups.set(key, {
+          message: log.message,
+          count: 0,
+          level: log.level,
+          service: log.service,
+          latest: log.timestamp
+        });
+      }
 
-  return [...groups.entries()]
-    .map(([message,items]) => ({message,items}))
-    .sort((a,b)=>b.items.length-a.items.length);
+      const group = groups.get(key);
+      group.count++;
+
+      if (severityOrder[log.level] < severityOrder[group.level]) {
+        group.level = log.level;
+      }
+
+      if (log.timestamp > group.latest) {
+        group.latest = log.timestamp;
+      }
+    });
+
+  return [...groups.values()]
+    .sort((a, b) => b.count - a.count);
 }
 
 function renderIncidents() {
-  const incidents = logs.filter(log => ["CRITICAL","ERROR"].includes(log.severity))
-    .sort((a,b) => (b.timestamp?.getTime() || 0)-(a.timestamp?.getTime() || 0));
-
-  $("timelineList").innerHTML = incidents.length ? incidents.slice(0,40).map(log => `
-    <div class="timeline-item">
-      <span class="timeline-marker" style="background:${colors[log.severity]}"></span>
-      <h4>${log.severity} · ${escapeHTML(log.service)}</h4>
-      <p>${escapeHTML(getMaskedMessage(log.message))}</p>
-      <small>${escapeHTML(log.timeLabel)} · ${escapeHTML(log.file)} · Line ${log.lineNumber}</small>
-    </div>
-  `).join("") : `<div class="empty-state">No critical or error events detected.</div>`;
-
+  const critical = state.logs.filter((log) => log.level === "CRITICAL");
+  const errors = state.logs.filter((log) => log.level === "ERROR");
   const patterns = getPatterns();
-  $("patternsList").innerHTML = patterns.length ? patterns.slice(0,10).map(pattern => `
-    <div class="pattern-row">
-      <span class="badge badge-ERROR">${pattern.items[0].severity}</span>
-      <div><strong>${pattern.items.length} occurrences</strong>
-      <p>${escapeHTML(getMaskedMessage(pattern.message))}</p>
-      <p>Services: ${escapeHTML([...new Set(pattern.items.map(item=>item.service))].join(", "))}</p></div>
-    </div>
-  `).join("") : `<div class="empty-state compact">No repeated error patterns detected.</div>`;
+
+  const services = new Set(
+    state.logs
+      .filter((log) => ["CRITICAL", "ERROR"].includes(log.level))
+      .map((log) => log.service)
+  );
+
+  if ($("incidentCount")) {
+    $("incidentCount").textContent = formatNumber(critical.length + errors.length);
+  }
+
+  if ($("patternCount")) {
+    $("patternCount").textContent = formatNumber(patterns.length);
+  }
+
+  if ($("serviceCount")) {
+    $("serviceCount").textContent = formatNumber(services.size);
+  }
+
+  const timeline = $("timelineList");
+
+  if (timeline) {
+    const incidents = [...critical, ...errors]
+      .sort((a, b) => b.timestamp - a.timestamp)
+      .slice(0, 20);
+
+    timeline.innerHTML = incidents.length
+      ? incidents.map((log) => `
+        <div class="timeline-item">
+          <span class="severity-dot ${log.level.toLowerCase()}"></span>
+          <div>
+            <strong>${log.level} · ${escapeHTML(log.service)}</strong>
+            <p>${escapeHTML(getDisplayedMessage(log.message))}</p>
+            <small>${escapeHTML(formatTime(log.timestamp))}</small>
+          </div>
+        </div>
+      `).join("")
+      : `<div class="empty-state">No incidents detected in this session.</div>`;
+  }
+
+  const patternList = $("patternsList");
+
+  if (patternList) {
+    patternList.innerHTML = patterns.length
+      ? patterns.slice(0, 10).map((pattern) => `
+        <div class="pattern-item">
+          <div>
+            <strong>${escapeHTML(pattern.service)}</strong>
+            <p>${escapeHTML(getDisplayedMessage(pattern.message))}</p>
+            <small>Latest: ${escapeHTML(formatTime(pattern.latest))}</small>
+          </div>
+          <span class="pattern-count">${pattern.count}×</span>
+        </div>
+      `).join("")
+      : `<div class="empty-state">Repeated error patterns will appear here.</div>`;
+  }
 }
 
-function investigate(message) {
-  const text = message.toLowerCase();
+/* =========================================
+   ROOT CAUSE INVESTIGATOR
+========================================= */
 
-  const rules = [
-    {
-      match:/timeout|timed out/,
-      title:"Possible request or service timeout",
-      cause:"A service may be taking longer than the configured request timeout. Network delays, slow database queries or an overloaded service could be responsible.",
-      steps:["Check response times and service latency.","Inspect database query performance.","Review timeout settings and upstream service health."]
-    },
-    {
-      match:/connection refused|econnrefused|connection reset/,
-      title:"Possible connection or service availability issue",
-      cause:"The application could not establish or maintain a connection. The destination service may be down, unreachable or listening on a different port.",
-      steps:["Verify that the destination service is running.","Check hostnames, ports and network connectivity.","Inspect firewall and service configuration."]
-    },
-    {
-      match:/out of memory|heap|memory/,
-      title:"Possible memory exhaustion",
-      cause:"The process may have exhausted available memory. Large objects, memory leaks or unusually high traffic could contribute.",
-      steps:["Inspect memory usage and application metrics.","Review recent changes that allocate large objects.","Check process limits and memory leak reports."]
-    },
-    {
-      match:/permission denied|unauthorized|forbidden|access denied|401|403/,
-      title:"Possible authentication or permission issue",
-      cause:"A request or process may not have the required credentials or access permissions.",
-      steps:["Verify credentials and token expiry.","Check user roles and resource permissions.","Inspect authentication and authorization configuration."]
-    },
-    {
-      match:/database|sql|mongodb|mysql|postgres|query failed/,
-      title:"Possible database issue",
-      cause:"The database operation may have failed due to connectivity, query errors, resource limits or unavailable database services.",
-      steps:["Check database availability and connection pools.","Inspect the query and database error details.","Review database capacity, locks and recent schema changes."]
-    },
-    {
-      match:/rate limit|too many requests|429/,
-      title:"Possible rate limiting",
-      cause:"The application or an external service may be receiving more requests than its configured limit allows.",
-      steps:["Inspect request volume and rate-limit responses.","Review retry and backoff behavior.","Check API quotas and client request patterns."]
-    },
-    {
-      match:/dns|enotfound|name resolution/,
-      title:"Possible DNS or hostname resolution issue",
-      cause:"The application may be unable to resolve a service hostname.",
-      steps:["Verify the hostname and DNS configuration.","Check network connectivity.","Inspect DNS records and service discovery."]
-    },
-    {
-      match:/disk full|no space left/,
-      title:"Possible disk capacity issue",
-      cause:"The system may have run out of available storage.",
-      steps:["Check free disk space.","Inspect large log files and temporary files.","Review storage limits and cleanup policies."]
-    },
-    {
-      match:/ssl|certificate|tls|handshake/,
-      title:"Possible TLS or certificate issue",
-      cause:"A secure connection may be failing because of certificate validity, trust or protocol configuration.",
-      steps:["Check certificate expiry and certificate chain.","Verify TLS configuration on both endpoints.","Inspect hostname and trust-store settings."]
-    }
-  ];
+function getFindings() {
+  const findings = [];
+  const stats = getStats();
 
-  const matched = rules.find(rule => rule.match.test(text));
+  const patterns = getPatterns();
 
-  return matched || {
-    title:"Unclassified application error",
-    cause:"The log contains an error, but its message does not match a known diagnostic pattern. More application context or a stack trace may be needed to identify the cause.",
-    steps:["Inspect the complete stack trace and surrounding log entries.","Check recent code and configuration changes.","Reproduce the issue and review related service logs."]
-  };
+  patterns
+    .filter((pattern) => pattern.count >= 2)
+    .slice(0, 4)
+    .forEach((pattern) => {
+      findings.push({
+        title: "Repeated error pattern",
+        description:
+          `${pattern.service} contains a recurring error pattern detected ${pattern.count} times.`,
+        level: pattern.level,
+        evidence: pattern.message
+      });
+    });
+
+  const timeoutLogs = state.logs.filter((log) =>
+    /\b(timeout|timed out|connection refused|connection reset)\b/i.test(log.message)
+  );
+
+  if (timeoutLogs.length) {
+    findings.push({
+      title: "Possible connectivity or latency issue",
+      description:
+        `${timeoutLogs.length} log entries mention timeouts or connection failures. Check service availability, network latency, and dependency health.`,
+      level: "WARNING",
+      evidence: timeoutLogs[0].message
+    });
+  }
+
+  const memoryLogs = state.logs.filter((log) =>
+    /\b(out of memory|heap|memory limit|memory exhausted)\b/i.test(log.message)
+  );
+
+  if (memoryLogs.length) {
+    findings.push({
+      title: "Possible memory pressure",
+      description:
+        `${memoryLogs.length} entries suggest memory-related problems. Review memory usage, heap limits, and recent workload changes.`,
+      level: "CRITICAL",
+      evidence: memoryLogs[0].message
+    });
+  }
+
+  const authLogs = state.logs.filter((log) =>
+    /\b(unauthorized|authentication failed|invalid credentials|forbidden|access denied)\b/i.test(log.message)
+  );
+
+  if (authLogs.length) {
+    findings.push({
+      title: "Authentication or permission failures",
+      description:
+        `${authLogs.length} entries indicate authentication or authorization problems. Review credentials, permissions, and token expiry.`,
+      level: "WARNING",
+      evidence: authLogs[0].message
+    });
+  }
+
+  if (stats.CRITICAL > 0) {
+    findings.push({
+      title: "Critical events detected",
+      description:
+        `${stats.CRITICAL} critical entries were found. Prioritize these events and inspect surrounding log activity.`,
+      level: "CRITICAL",
+      evidence: state.logs.find((log) => log.level === "CRITICAL")?.message || ""
+    });
+  }
+
+  return findings;
 }
 
 function renderFindings() {
-  const patterns = getPatterns();
-  const findings = patterns.map(pattern => ({
-    ...pattern,
-    analysis:investigate(pattern.message),
-    severity:pattern.items.some(item=>item.severity==="CRITICAL") ? "CRITICAL" : "ERROR"
-  }));
+  const container = $("findingsList");
+  if (!container) return;
 
-  $("findingCount").textContent = `${findings.length} findings`;
+  const findings = getFindings();
 
-  $("findingsList").innerHTML = findings.length ? findings.slice(0,15).map((finding,index) => `
-    <div class="finding-row">
-      <div class="finding-severity">✧</div>
-      <div class="finding-content">
-        <h4>${index+1}. ${escapeHTML(finding.analysis.title)}</h4>
-        <p><strong>Observed pattern:</strong> ${escapeHTML(getMaskedMessage(finding.message))}</p>
-        <p><strong>Occurrences:</strong> ${finding.items.length} · <strong>Severity:</strong> ${finding.severity}</p>
-        <p style="margin-top:8px"><strong>Likely cause:</strong> ${escapeHTML(finding.analysis.cause)}</p>
-        <p class="suggestion"><strong>Suggested debugging steps:</strong> ${finding.analysis.steps.map(escapeHTML).join(" · ")}</p>
+  if ($("findingCount")) {
+    $("findingCount").textContent = formatNumber(findings.length);
+  }
+
+  container.innerHTML = findings.length
+    ? findings.map((finding) => `
+      <div class="finding-card">
+        <div class="finding-heading">
+          <strong>${escapeHTML(finding.title)}</strong>
+          <span class="severity-badge ${finding.level.toLowerCase()}">
+            ${finding.level}
+          </span>
+        </div>
+        <p>${escapeHTML(finding.description)}</p>
+        <div class="finding-evidence">
+          <small>Supporting log evidence</small>
+          <code>${escapeHTML(getDisplayedMessage(finding.evidence))}</code>
+        </div>
       </div>
-    </div>
-  `).join("") : `<div class="empty-state">No errors to investigate. Upload logs containing errors or critical events.</div>`;
+    `).join("")
+    : `
+      <div class="empty-state">
+        <strong>No investigation findings yet.</strong>
+        <p>Upload logs to generate rule-based investigation suggestions.</p>
+      </div>
+    `;
 }
+
+/* =========================================
+   REPORTS
+========================================= */
 
 function renderReport() {
   const stats = getStats();
-  const health = getHealth(stats);
-  const patterns = getPatterns();
 
-  $("reportMeta").textContent = logs.length
-    ? `${logs.length} log entries · ${new Date().toLocaleString()}`
-    : "No analysis session available";
-
-  $("reportStats").innerHTML = [
-    ["Total logs",logs.length],
-    ["Critical",stats.CRITICAL],
-    ["Errors",stats.ERROR],
-    ["Warnings",stats.WARNING]
-  ].map(([label,value]) => `
-    <div class="report-stat"><span>${label}</span><strong>${value}</strong></div>
-  `).join("") + `
-    <div class="report-stat"><span>Health score</span><strong>${health ?? "—"}${health === null ? "" : "/100"}</strong></div>
-    <div class="report-stat"><span>Error patterns</span><strong>${patterns.length}</strong></div>
-  `;
-}
-
-function downloadReport() {
-  if (!logs.length) {
-    notify("Upload logs before generating a report.");
-    return;
+  if ($("reportMeta")) {
+    $("reportMeta").textContent =
+      `${formatNumber(stats.total)} log entries · Generated ${new Date().toLocaleString()}`;
   }
 
-  const stats = getStats();
-  const health = getHealth(stats);
-  const patterns = getPatterns();
-  const findings = patterns.map(item => investigate(item.message));
+  if ($("reportStats")) {
+    $("reportStats").innerHTML = `
+      <div class="report-stat">
+        <span>Total logs</span>
+        <strong>${formatNumber(stats.total)}</strong>
+      </div>
+      <div class="report-stat">
+        <span>Critical</span>
+        <strong>${formatNumber(stats.CRITICAL)}</strong>
+      </div>
+      <div class="report-stat">
+        <span>Errors</span>
+        <strong>${formatNumber(stats.ERROR)}</strong>
+      </div>
+      <div class="report-stat">
+        <span>Warnings</span>
+        <strong>${formatNumber(stats.WARNING)}</strong>
+      </div>
+      <div class="report-stat">
+        <span>Health score</span>
+        <strong>${getHealth(stats)}%</strong>
+      </div>
+      <div class="report-stat">
+        <span>Error patterns</span>
+        <strong>${formatNumber(getPatterns().length)}</strong>
+      </div>
+    `;
+  }
+}
 
-  const report = [
+function createReportText() {
+  const stats = getStats();
+  const findings = getFindings();
+  const patterns = getPatterns();
+
+  const lines = [
     "LOGLENS — LOG ANALYSIS REPORT",
     "====================================",
     `Generated: ${new Date().toLocaleString()}`,
-    `Total log entries: ${logs.length}`,
-    `Application health score: ${health}/100`,
     "",
-    "SEVERITY DISTRIBUTION",
-    ...Object.entries(stats).map(([level,count])=>`${level}: ${count}`),
-    "",
-    "FILES ANALYZED",
-    ...[...new Set(logs.map(log=>log.file))].map(file=>`- ${file}`),
+    "SUMMARY",
+    `Total logs: ${stats.total}`,
+    `Critical: ${stats.CRITICAL}`,
+    `Errors: ${stats.ERROR}`,
+    `Warnings: ${stats.WARNING}`,
+    `Info: ${stats.INFO}`,
+    `Health score: ${getHealth(stats)}%`,
     "",
     "REPEATED ERROR PATTERNS",
-    ...patterns.map(pattern=>`- ${pattern.items.length} occurrences: ${getMaskedMessage(pattern.message)}`),
-    "",
-    "ROOT CAUSE INVESTIGATION",
-    ...findings.map((finding,index)=>[
-      `${index+1}. ${finding.title}`,
-      `Likely cause: ${finding.cause}`,
-      ...finding.steps.map(step=>`- ${step}`),
-      ""
-    ].join("\n")),
-    "",
-    "Note: Root cause suggestions are rule-based diagnostic hints, not confirmed causes.",
-    "Sensitive values may be masked depending on your current masking setting."
-  ].join("\n");
+    "===================================="
+  ];
 
-  downloadText(report,"loglens-analysis-report.txt");
-}
-
-function downloadText(content,fileName) {
-  const blob = new Blob([content],{type:"text/plain;charset=utf-8"});
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = fileName;
-  link.click();
-  URL.revokeObjectURL(url);
-}
-
-function compareFiles() {
-  if (!compareA || !compareB) {
-    notify("Please select both files before comparing.");
-    return;
+  if (!patterns.length) {
+    lines.push("No error patterns detected.");
+  } else {
+    patterns.slice(0, 20).forEach((pattern, index) => {
+      lines.push(
+        `${index + 1}. [${pattern.level}] ${pattern.service} — ${maskSensitiveData(pattern.message)} (${pattern.count} occurrences)`
+      );
+    });
   }
 
-  const a = parseLogs(compareA.content,compareA.name);
-  const b = parseLogs(compareB.content,compareB.name);
+  lines.push("", "INVESTIGATION FINDINGS", "====================================");
 
-  const countErrors = items => items.filter(item=>["CRITICAL","ERROR"].includes(item.severity)).length;
-  const countWarnings = items => items.filter(item=>item.severity==="WARNING").length;
-
-  const errorsA = countErrors(a);
-  const errorsB = countErrors(b);
-  const warningsA = countWarnings(a);
-  const warningsB = countWarnings(b);
-
-  const signatures = items => {
-    const map = new Map();
-    items.filter(item=>["CRITICAL","ERROR"].includes(item.severity)).forEach(item => {
-      const key = item.message.replace(/\b\d+\b/g,"[N]").slice(0,150);
-      map.set(key,(map.get(key)||0)+1);
+  if (!findings.length) {
+    lines.push("No findings generated.");
+  } else {
+    findings.forEach((finding, index) => {
+      lines.push(
+        `${index + 1}. ${finding.title} [${finding.level}]`,
+        finding.description,
+        `Evidence: ${maskSensitiveData(finding.evidence)}`,
+        ""
+      );
     });
-    return map;
+  }
+
+  lines.push("", "LOG ENTRIES", "====================================");
+
+  state.logs.forEach((log) => {
+    lines.push(
+      `[${formatTime(log.timestamp)}] [${log.level}] [${log.service}] ${maskSensitiveData(log.message)}`
+    );
+  });
+
+  lines.push(
+    "",
+    "Note: Investigation findings are rule-based suggestions, not confirmed root causes."
+  );
+
+  return lines.join("\n");
+}
+
+function downloadText(content, fileName) {
+  const blob = new Blob([content], {
+    type: "text/plain;charset=utf-8"
+  });
+
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+
+  anchor.href = url;
+  anchor.download = fileName;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/* =========================================
+   LOG COMPARISON
+========================================= */
+
+function compareFiles(logsA, logsB, nameA, nameB) {
+  const statsA = getStats(logsA);
+  const statsB = getStats(logsB);
+
+  const difference = (a, b) => {
+    if (a === b) return "No change";
+    return b > a
+      ? `Increased by ${b - a}`
+      : `Decreased by ${a - b}`;
   };
 
-  const mapA = signatures(a);
-  const mapB = signatures(b);
+  const patternsA = new Set(
+    logsA
+      .filter((log) => ["CRITICAL", "ERROR"].includes(log.level))
+      .map((log) => normalizeMessage(log.message))
+  );
 
-  const newIssues = [...mapB.keys()].filter(key=>!mapA.has(key));
-  const resolvedIssues = [...mapA.keys()].filter(key=>!mapB.has(key));
-  const recurring = [...mapB.entries()].filter(([key,count])=>mapA.has(key)&&count>mapA.get(key));
+  const patternsB = new Set(
+    logsB
+      .filter((log) => ["CRITICAL", "ERROR"].includes(log.level))
+      .map((log) => normalizeMessage(log.message))
+  );
 
-  $("compareResults").innerHTML = `
-    <div class="panel compare-results">
-      <div class="panel-heading"><div><h3>Comparison results</h3><p>${escapeHTML(compareA.name)} vs ${escapeHTML(compareB.name)}</p></div><span class="local-badge">COMPLETED</span></div>
-      <div class="compare-metrics">
-        <div><span>New error patterns</span><strong style="color:var(--red)">${newIssues.length}</strong></div>
-        <div><span>Resolved patterns</span><strong style="color:var(--green)">${resolvedIssues.length}</strong></div>
-        <div><span>Increased patterns</span><strong style="color:var(--orange)">${recurring.length}</strong></div>
+  const newPatterns = [...patternsB].filter((item) => !patternsA.has(item));
+  const resolvedPatterns = [...patternsA].filter((item) => !patternsB.has(item));
+
+  const container = $("compareResults");
+  if (!container) return;
+
+  container.innerHTML = `
+    <div class="compare-summary">
+      <div class="compare-file">
+        <small>Baseline</small>
+        <strong>${escapeHTML(nameA)}</strong>
+        <span>${formatNumber(statsA.total)} log entries</span>
       </div>
-      <div class="compare-metrics">
-        <div><span>File A errors</span><strong>${errorsA}</strong></div>
-        <div><span>File B errors</span><strong>${errorsB}</strong></div>
-        <div><span>Error difference</span><strong>${errorsB-errorsA>0?"+":""}${errorsB-errorsA}</strong></div>
+      <div class="compare-file">
+        <small>Comparison</small>
+        <strong>${escapeHTML(nameB)}</strong>
+        <span>${formatNumber(statsB.total)} log entries</span>
       </div>
-      <div class="pattern-row"><div><strong>New error patterns</strong><p>${newIssues.length?newIssues.map(escapeHTML).join("<br>"):"No new error patterns detected."}</p></div></div>
-      <div class="pattern-row"><div><strong>Resolved error patterns</strong><p>${resolvedIssues.length?resolvedIssues.map(escapeHTML).join("<br>"):"No resolved patterns detected."}</p></div></div>
-      <div class="pattern-row"><div><strong>Increased occurrences</strong><p>${recurring.length?recurring.map(([key,count])=>`${escapeHTML(key)} (${mapA.get(key)} → ${count})`).join("<br>"):"No increased recurring patterns."}</p></div></div>
-      <p class="subtitle">Warning counts: ${warningsA} in File A and ${warningsB} in File B. Comparison uses normalized error-message patterns.</p>
     </div>
+
+    <div class="compare-grid">
+      ${["CRITICAL", "ERROR", "WARNING", "INFO"].map((level) => `
+        <div class="compare-metric">
+          <span>${level}</span>
+          <strong>${statsA[level]} → ${statsB[level]}</strong>
+          <small>${difference(statsA[level], statsB[level])}</small>
+        </div>
+      `).join("")}
+    </div>
+
+    <div class="compare-insights">
+      <div>
+        <strong>New error patterns</strong>
+        <span>${newPatterns.length}</span>
+      </div>
+      <div>
+        <strong>Patterns no longer present</strong>
+        <span>${resolvedPatterns.length}</span>
+      </div>
+    </div>
+
+    <p class="compare-note">
+      Pattern comparison uses normalized error messages. A pattern disappearing
+      from the second file does not by itself confirm that an incident is resolved.
+    </p>
   `;
 }
 
+async function readCompareFile(file) {
+  if (!file) return [];
+
+  if (!/\.(log|txt)$/i.test(file.name)) {
+    throw new Error("Please choose a .log or .txt file.");
+  }
+
+  const text = await file.text();
+  return parseLogs(text, file.name);
+}
+
+/* =========================================
+   NAVIGATION
+========================================= */
+
 function switchSection(section) {
-  document.querySelectorAll(".page-section").forEach(item => item.classList.toggle("active",item.id===section));
-  document.querySelectorAll(".nav-link").forEach(item => item.classList.toggle("active",item.dataset.section===section));
+  if (!sectionTitles[section]) return;
 
-  const active = document.querySelector(`.nav-link[data-section="${section}"]`);
-  $("breadcrumbTitle").textContent = active ? active.textContent.trim() : "Overview";
-  $("sidebar").classList.remove("open");
+  document.querySelectorAll(".app-section").forEach((element) => {
+    element.classList.toggle("active", element.id === section);
+  });
 
-  if (section==="explorer") renderExplorer();
-  if (section==="incidents") renderIncidents();
-  if (section==="investigator") renderFindings();
-  if (section==="reports") renderReport();
+  document.querySelectorAll("[data-section]").forEach((button) => {
+    button.classList.toggle(
+      "active",
+      button.dataset.section === section
+    );
+  });
+
+  if ($("breadcrumbTitle")) {
+    $("breadcrumbTitle").textContent = sectionTitles[section];
+  }
+
+  $("sidebar")?.classList.remove("open");
+
+  if (section === "explorer") renderExplorer();
+  if (section === "incidents") renderIncidents();
+  if (section === "investigator") renderFindings();
+  if (section === "reports") renderReport();
 }
 
-function readCompareFile(file,side) {
-  if (!file) return;
-  file.text().then(content => {
-    const result = {name:file.name,content};
-    if (side==="A") compareA=result;
-    else compareB=result;
+/* =========================================
+   REFRESH ALL VIEWS
+========================================= */
 
-    $(`file${side}Name`).textContent = `${file.name} · ${(file.size/1024).toFixed(1)} KB`;
-    notify(`File ${side} ready for comparison.`);
-  }).catch(()=>notify("Unable to read the selected file."));
+function refreshDashboard() {
+  updateStats();
+  renderRecent();
 }
 
-// Navigation
-document.querySelectorAll(".nav-link").forEach(button => {
-  button.addEventListener("click",()=>switchSection(button.dataset.section));
+function refreshAll() {
+  updateFileFilter();
+  refreshDashboard();
+  renderExplorer();
+  renderIncidents();
+  renderFindings();
+  renderReport();
+}
+
+/* =========================================
+   FILE UPLOAD EVENTS
+========================================= */
+
+$("chooseFiles")?.addEventListener("click", () => {
+  $("logFiles")?.click();
 });
 
-document.querySelectorAll("[data-go]").forEach(button => {
-  button.addEventListener("click",()=>switchSection(button.dataset.go));
+$("uploadTopButton")?.addEventListener("click", () => {
+  $("logFiles")?.click();
 });
 
-// File upload
-$("uploadTopButton").addEventListener("click",()=>switchSection("explorer"));
-$("bannerUpload").addEventListener("click",()=>switchSection("explorer"));
-$("explorerUpload").addEventListener("click",()=>$("logFiles").click());
-$("chooseFiles").addEventListener("click",()=>$("logFiles").click());
-
-$("logFiles").addEventListener("change",event=>{
-  handleFiles(event.target.files);
-  event.target.value="";
+$("bannerUpload")?.addEventListener("click", () => {
+  $("logFiles")?.click();
 });
 
-// Drag and drop
+$("logFiles")?.addEventListener("change", async (event) => {
+  await handleFiles(event.target.files);
+  event.target.value = "";
+});
+
+/* =========================================
+   DRAG AND DROP
+========================================= */
+
 const dropZone = $("dropZone");
 
-dropZone.addEventListener("dragover",event=>{
-  event.preventDefault();
-  dropZone.style.borderColor="var(--purple)";
-});
-
-dropZone.addEventListener("dragleave",()=>{
-  dropZone.style.borderColor="";
-});
-
-dropZone.addEventListener("drop",event=>{
-  event.preventDefault();
-  dropZone.style.borderColor="";
-  handleFiles(event.dataTransfer.files);
-});
-
-// Search and filters
-["searchInput","levelFilter","fileFilter"].forEach(id=>{
-  $(id).addEventListener(id==="searchInput"?"input":"change",()=>{
-    currentPage=1;
-    renderExplorer();
+if (dropZone) {
+  ["dragenter", "dragover"].forEach((eventName) => {
+    dropZone.addEventListener(eventName, (event) => {
+      event.preventDefault();
+      dropZone.classList.add("drag-over");
+    });
   });
+
+  ["dragleave", "drop"].forEach((eventName) => {
+    dropZone.addEventListener(eventName, (event) => {
+      event.preventDefault();
+      dropZone.classList.remove("drag-over");
+    });
+  });
+
+  dropZone.addEventListener("drop", async (event) => {
+    await handleFiles(event.dataTransfer?.files);
+  });
+}
+
+/* =========================================
+   SEARCH AND FILTER EVENTS
+========================================= */
+
+$("searchInput")?.addEventListener("input", () => {
+  state.currentPage = 1;
+  renderExplorer();
 });
 
-$("maskToggle").addEventListener("change",()=>{
+$("levelFilter")?.addEventListener("change", () => {
+  state.currentPage = 1;
+  renderExplorer();
+});
+
+$("fileFilter")?.addEventListener("change", () => {
+  state.currentPage = 1;
+  renderExplorer();
+});
+
+$("maskToggle")?.addEventListener("change", () => {
   renderExplorer();
   renderRecent();
   renderIncidents();
   renderFindings();
 });
 
-$("prevPage").addEventListener("click",()=>{
-  currentPage--;
-  renderExplorer();
+/* =========================================
+   PAGINATION
+========================================= */
+
+$("prevPage")?.addEventListener("click", () => {
+  if (state.currentPage > 1) {
+    state.currentPage--;
+    renderExplorer();
+  }
 });
 
-$("nextPage").addEventListener("click",()=>{
-  currentPage++;
-  renderExplorer();
+$("nextPage")?.addEventListener("click", () => {
+  const totalPages = Math.max(
+    1,
+    Math.ceil(getFilteredLogs().length / state.pageSize)
+  );
+
+  if (state.currentPage < totalPages) {
+    state.currentPage++;
+    renderExplorer();
+  }
 });
 
-// Clear session
-$("clearLogs").addEventListener("click",()=>{
-  if (!logs.length) return notify("There are no logs to clear.");
+/* =========================================
+   CLEAR SESSION
+========================================= */
 
-  if (!confirm("Clear all uploaded logs from this session?")) return;
+$("clearSession")?.addEventListener("click", () => {
+  if (!state.logs.length) {
+    notify("There are no logs to clear.", "error");
+    return;
+  }
 
-  logs=[];
-  currentPage=1;
-  refreshDashboard();
-  renderExplorer();
-  renderIncidents();
-  renderFindings();
-  renderReport();
-  updateFileFilter();
-  notify("Analysis session cleared.");
+  const confirmed = window.confirm(
+    "Clear all imported logs from this browser session?"
+  );
+
+  if (!confirmed) return;
+
+  state.logs = [];
+  state.currentPage = 1;
+
+  refreshAll();
+  notify("Current log session cleared.");
 });
 
-// Compare files
-$("compareFileA").addEventListener("change",event=>readCompareFile(event.target.files[0],"A"));
-$("compareFileB").addEventListener("change",event=>readCompareFile(event.target.files[0],"B"));
-$("runCompare").addEventListener("click",compareFiles);
+/* =========================================
+   NAVIGATION BUTTONS
+========================================= */
 
-// Reports
-$("downloadReport").addEventListener("click",downloadReport);
-
-// Theme
-$("themeToggle").addEventListener("click",()=>{
-  document.body.classList.toggle("light");
-  localStorage.setItem("loglens-theme",document.body.classList.contains("light")?"light":"dark");
+document.querySelectorAll("[data-section]").forEach((button) => {
+  button.addEventListener("click", () => {
+    switchSection(button.dataset.section);
+  });
 });
 
-if (localStorage.getItem("loglens-theme")==="light") {
-  document.body.classList.add("light");
+document.querySelectorAll("[data-go]").forEach((button) => {
+  button.addEventListener("click", () => {
+    switchSection(button.dataset.go);
+  });
+});
+
+/* =========================================
+   LOG COMPARISON EVENTS
+========================================= */
+
+$("compareFileA")?.addEventListener("change", (event) => {
+  const file = event.target.files?.[0];
+
+  state.compareA = [];
+
+  if ($("compareNameA")) {
+    $("compareNameA").textContent = file?.name || "No file selected";
+  }
+});
+
+$("compareFileB")?.addEventListener("change", (event) => {
+  const file = event.target.files?.[0];
+
+  state.compareB = [];
+
+  if ($("compareNameB")) {
+    $("compareNameB").textContent = file?.name || "No file selected";
+  }
+});
+
+$("runCompare")?.addEventListener("click", async () => {
+  const fileA = $("compareFileA")?.files?.[0];
+  const fileB = $("compareFileB")?.files?.[0];
+
+  if (!fileA || !fileB) {
+    notify("Choose both files before comparing.", "error");
+    return;
+  }
+
+  try {
+    state.compareA = await readCompareFile(fileA);
+    state.compareB = await readCompareFile(fileB);
+
+    compareFiles(
+      state.compareA,
+      state.compareB,
+      fileA.name,
+      fileB.name
+    );
+
+    notify("Log comparison completed.");
+  } catch (error) {
+    notify(error.message || "Could not compare these files.", "error");
+  }
+});
+
+/* =========================================
+   REPORT DOWNLOAD
+========================================= */
+
+$("downloadReport")?.addEventListener("click", () => {
+  if (!state.logs.length) {
+    notify("Upload logs before generating a report.", "error");
+    return;
+  }
+
+  downloadText(
+    createReportText(),
+    `LogLens-Report-${new Date().toISOString().slice(0, 10)}.txt`
+  );
+
+  notify("Your report has been downloaded.");
+});
+
+/* =========================================
+   THEME TOGGLE
+========================================= */
+
+function applyTheme(theme) {
+  document.body.classList.toggle("light-theme", theme === "light");
+
+  const button = $("themeToggle");
+
+  if (button) {
+    button.textContent = theme === "light" ? "☾" : "☀";
+    button.setAttribute(
+      "aria-label",
+      theme === "light" ? "Switch to dark theme" : "Switch to light theme"
+    );
+  }
 }
 
-// Mobile navigation
-$("menuToggle").addEventListener("click",()=>{
-  $("sidebar").classList.toggle("open");
+let savedTheme = "dark";
+
+try {
+  savedTheme = localStorage.getItem("loglens-theme") || "dark";
+} catch (error) {
+  console.warn("Theme preference could not be loaded.");
+}
+
+applyTheme(savedTheme);
+
+$("themeToggle")?.addEventListener("click", () => {
+  const nextTheme = document.body.classList.contains("light-theme")
+    ? "dark"
+    : "light";
+
+  applyTheme(nextTheme);
+
+  try {
+    localStorage.setItem("loglens-theme", nextTheme);
+  } catch (error) {
+    console.warn("Theme preference could not be saved.");
+  }
 });
 
-// Initialize
-refreshDashboard();
-renderExplorer();
-renderIncidents();
-renderFindings();
-renderReport();
+/* =========================================
+   MOBILE SIDEBAR
+========================================= */
+
+$("menuToggle")?.addEventListener("click", () => {
+  $("sidebar")?.classList.toggle("open");
+});
+
+/* =========================================
+   INITIALIZATION
+========================================= */
+
+function initializeLogLens() {
+  refreshAll();
+
+  window.addEventListener("resize", () => {
+    updateStats();
+  });
+
+  console.log("LogLens initialized successfully.");
+}
+
+initializeLogLens();
