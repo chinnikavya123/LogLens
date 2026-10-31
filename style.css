@@ -207,15 +207,15 @@ td.message-cell{color:#d7deef;overflow:hidden;text-overflow:ellipsis;white-space
 .report-stat strong{font:600 23px 'Space Grotesk';margin-top:8px}
 .toast{position:fixed;bottom:25px;right:25px;background:#202d42;border:1px solid #455572;color:var(--text);padding:12px 18px;border-radius:9px;box-shadow:var(--shadow);font-size:11px;z-index:50;opacity:0;transform:translateY(12px);pointer-events:none;transition:.25s}
 .toast.show{opacity:1;transform:translateY(0)}
-body.light{--bg:#f3f5fb;--sidebar:#fff;--panel:#fff;--panel2:#f0f2fa;--border:#e1e5ef;--text:#182139;--muted:#69758c;--faint:#929db0;--shadow:0 12px 40px #19284b0c}
-body.light .topbar{background:#ffffffed}
-body.light .welcome-banner{color:#edf2ff}
-body.light .banner-content p{color:#c3c7dd}
-body.light .search-box,body.light .toolbar select,body.light th{background:#f6f7fb;color:var(--text)}
-body.light .search-box input{color:var(--text)}
-body.light .privacy-card{background:#f6f5ff}
-body.light .investigator-intro{color:#edf2ff}
-body.light .investigator-intro p{color:#c3c7dd}
+body.light-theme{--bg:#f3f5fb;--sidebar:#fff;--panel:#fff;--panel2:#f0f2fa;--border:#e1e5ef;--text:#182139;--muted:#69758c;--faint:#929db0;--shadow:0 12px 40px #19284b0c}
+body.light-theme .topbar{background:#ffffffed}
+body.light-theme .welcome-banner{color:#edf2ff}
+body.light-theme .banner-content p{color:#c3c7dd}
+body.light-theme .search-box,body.light-theme .toolbar select,body.light-theme th{background:#f6f7fb;color:var(--text)}
+body.light-theme .search-box input{color:var(--text)}
+body.light-theme .privacy-card{background:#f6f5ff}
+body.light-theme .investigator-intro{color:#edf2ff}
+body.light-theme .investigator-intro p{color:#c3c7dd}
 @media(max-width:1100px){.sidebar{width:215px}.main-area{margin-left:215px}.page-content{padding:28px 24px}.stats-grid{grid-template-columns:repeat(2,1fr)}.banner-art{right:3%}}
 @media(max-width:760px){.sidebar{transform:translateX(-100%);transition:transform .25s;width:255px}.sidebar.open{transform:translateX(0)}.main-area{margin-left:0}.topbar{padding:0 17px;height:59px}.mobile-menu{display:block}.mobile-brand{display:flex;align-items:center;gap:8px;font-weight:700;margin-right:auto;margin-left:10px}.mobile-brand .brand-icon{width:28px;height:28px;font-size:16px}.breadcrumb{display:none}.topbar-right{gap:10px}.system-status{font-size:0}.system-status i{width:8px;height:8px}.page-content{padding:24px 16px}.page-heading{align-items:flex-start}.page-heading h1{font-size:24px}.welcome-banner{padding:25px 21px}.banner-art{opacity:.23;right:-35px}.banner-content{max-width:100%}.banner-content p{max-width:390px}.dashboard-grid{grid-template-columns:1fr}.stats-grid{gap:10px}.stat-card{padding:14px}.stat-value{font-size:25px}.lower-grid{display:flex;flex-direction:column}.footer{gap:10px;flex-wrap:wrap}.toolbar{align-items:stretch}.search-box{flex-basis:100%}.toolbar select{flex:1}.mask-toggle{padding:5px}.upload-panel{flex-wrap:wrap}.upload-panel>div:nth-child(2){flex-basis:70%}.incident-summary{padding:12px 4px}.incident-summary div{padding:5px 10px}.incident-summary span{font-size:9px}.incident-summary strong{font-size:22px}.compare-grid{grid-template-columns:1fr}.compare-middle{padding:2px}.report-stats{grid-template-columns:repeat(2,1fr)}.report-preview{align-items:flex-start;padding:18px}.investigator-intro{padding:18px;align-items:flex-start}}
 @media(max-width:420px){.stats-grid{grid-template-columns:1fr 1fr}.stat-top{font-size:10px}.stat-icon{width:27px;height:27px}.page-heading .primary-button{padding:10px;font-size:10px}.banner-content h2{font-size:23px}.incident-summary{grid-template-columns:1fr;gap:12px}.incident-summary div{border:0;border-bottom:1px solid var(--border);padding-bottom:12px}.incident-summary div:last-child{border:0}.topbar-right{gap:5px}}
@@ -460,25 +460,25 @@ td {
 }
 
 /* Light theme refinements */
-body.light {
+body.light-theme {
   background: #f3f5fb;
 }
 
-body.light .sidebar {
+body.light-theme .sidebar {
   background: #ffffff;
 }
 
-body.light .stat-card,
-body.light .panel {
+body.light-theme .stat-card,
+body.light-theme .panel {
   box-shadow: 0 5px 20px #19284b0a;
 }
 
-body.light .stat-card:hover,
-body.light .panel:hover {
+body.light-theme .stat-card:hover,
+body.light-theme .panel:hover {
   box-shadow: 0 10px 25px #19284b12;
 }
 
-body.light tbody tr:hover {
+body.light-theme tbody tr:hover {
   background: #9275ff09;
 }
 
