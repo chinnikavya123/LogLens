@@ -13,7 +13,8 @@ const state = {
   pageSize: 12,
   compareA: [],
   compareB: [],
-  toastTimer: null
+  toastTimer: null,
+  compareRequest: 0
 };
 
 const severityOrder = {
@@ -382,6 +383,8 @@ function renderChart(stats) {
   if (!canvas) return;
 
   const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+
   const size = 190;
   const dpr = window.devicePixelRatio || 1;
 
@@ -490,11 +493,8 @@ function getFilteredLogs() {
       log.service.toLowerCase().includes(search) ||
       log.file.toLowerCase().includes(search);
 
-    const matchesLevel =
-      level === "ALL" || log.level === level;
-
-    const matchesFile =
-      file === "ALL" || log.file === file;
+    const matchesLevel = level === "ALL" || log.level === level;
+    const matchesFile = file === "ALL" || log.file === file;
 
     return matchesSearch && matchesLevel && matchesFile;
   }).sort((a, b) => b.timestamp - a.timestamp);
@@ -505,7 +505,6 @@ function updateFileFilter() {
   if (!select) return;
 
   const previous = select.value;
-
   const files = [...new Set(state.logs.map((log) => log.file))];
 
   select.innerHTML = `
@@ -537,8 +536,7 @@ function renderExplorer() {
   }
 
   if ($("pageInfo")) {
-    $("pageInfo").textContent =
-      `Page ${state.currentPage} of ${totalPages}`;
+    $("pageInfo").textContent = `Page ${state.currentPage} of ${totalPages}`;
   }
 
   if ($("prevPage")) {
@@ -552,9 +550,7 @@ function renderExplorer() {
   if (!visible.length) {
     table.innerHTML = `
       <tr>
-        <td colspan="5" class="empty-state">
-          No matching logs found.
-        </td>
+        <td colspan="5" class="empty-state">No matching logs found.</td>
       </tr>
     `;
     return;
@@ -619,8 +615,7 @@ function getPatterns() {
       }
     });
 
-  return [...groups.values()]
-    .sort((a, b) => b.count - a.count);
+  return [...groups.values()].sort((a, b) => b.count - a.count);
 }
 
 function renderIncidents() {
@@ -692,7 +687,6 @@ function renderIncidents() {
 function getFindings() {
   const findings = [];
   const stats = getStats();
-
   const patterns = getPatterns();
 
   patterns
@@ -811,30 +805,12 @@ function renderReport() {
 
   if ($("reportStats")) {
     $("reportStats").innerHTML = `
-      <div class="report-stat">
-        <span>Total logs</span>
-        <strong>${formatNumber(stats.total)}</strong>
-      </div>
-      <div class="report-stat">
-        <span>Critical</span>
-        <strong>${formatNumber(stats.CRITICAL)}</strong>
-      </div>
-      <div class="report-stat">
-        <span>Errors</span>
-        <strong>${formatNumber(stats.ERROR)}</strong>
-      </div>
-      <div class="report-stat">
-        <span>Warnings</span>
-        <strong>${formatNumber(stats.WARNING)}</strong>
-      </div>
-      <div class="report-stat">
-        <span>Health score</span>
-        <strong>${getHealth(stats)}%</strong>
-      </div>
-      <div class="report-stat">
-        <span>Error patterns</span>
-        <strong>${formatNumber(getPatterns().length)}</strong>
-      </div>
+      <div class="report-stat"><span>Total logs</span><strong>${formatNumber(stats.total)}</strong></div>
+      <div class="report-stat"><span>Critical</span><strong>${formatNumber(stats.CRITICAL)}</strong></div>
+      <div class="report-stat"><span>Errors</span><strong>${formatNumber(stats.ERROR)}</strong></div>
+      <div class="report-stat"><span>Warnings</span><strong>${formatNumber(stats.WARNING)}</strong></div>
+      <div class="report-stat"><span>Health score</span><strong>${getHealth(stats)}%</strong></div>
+      <div class="report-stat"><span>Error patterns</span><strong>${formatNumber(getPatterns().length)}</strong></div>
     `;
   }
 }
@@ -923,15 +899,35 @@ function downloadText(content, fileName) {
    LOG COMPARISON
 ========================================= */
 
+// Show a clean state whenever the selected files change.
+function resetCompareResults(message = "Select two log files and run a comparison to see the results.") {
+  state.compareA = [];
+  state.compareB = [];
+
+  const container = $("compareResults");
+
+  if (container) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <strong>No comparison results yet.</strong>
+        <p>${escapeHTML(message)}</p>
+      </div>
+    `;
+  }
+}
+
+// This function receives only the two selected files' parsed logs.
+// It never reads state.logs.
 function compareFiles(logsA, logsB, nameA, nameB) {
   const statsA = getStats(logsA);
   const statsB = getStats(logsB);
 
   const difference = (a, b) => {
     if (a === b) return "No change";
+
     return b > a
-      ? `Increased by ${b - a}`
-      : `Decreased by ${a - b}`;
+      ? `Increased by ${formatNumber(b - a)}`
+      : `Decreased by ${formatNumber(a - b)}`;
   };
 
   const patternsA = new Set(
@@ -970,7 +966,7 @@ function compareFiles(logsA, logsB, nameA, nameB) {
       ${["CRITICAL", "ERROR", "WARNING", "INFO"].map((level) => `
         <div class="compare-metric">
           <span>${level}</span>
-          <strong>${statsA[level]} → ${statsB[level]}</strong>
+          <strong>${formatNumber(statsA[level])} → ${formatNumber(statsB[level])}</strong>
           <small>${difference(statsA[level], statsB[level])}</small>
         </div>
       `).join("")}
@@ -979,11 +975,11 @@ function compareFiles(logsA, logsB, nameA, nameB) {
     <div class="compare-insights">
       <div>
         <strong>New error patterns</strong>
-        <span>${newPatterns.length}</span>
+        <span>${formatNumber(newPatterns.length)}</span>
       </div>
       <div>
         <strong>Patterns no longer present</strong>
-        <span>${resolvedPatterns.length}</span>
+        <span>${formatNumber(resolvedPatterns.length)}</span>
       </div>
     </div>
 
@@ -995,7 +991,9 @@ function compareFiles(logsA, logsB, nameA, nameB) {
 }
 
 async function readCompareFile(file) {
-  if (!file) return [];
+  if (!file) {
+    throw new Error("Please select a file.");
+  }
 
   if (!/\.(log|txt)$/i.test(file.name)) {
     throw new Error("Please choose a .log or .txt file.");
@@ -1051,6 +1049,18 @@ function refreshAll() {
   renderIncidents();
   renderFindings();
   renderReport();
+  updateSessionLabel();
+}
+
+function updateSessionLabel() {
+  const label = $("sessionLabel");
+  if (!label) return;
+
+  const files = [...new Set(state.logs.map((log) => log.file))];
+
+  label.textContent = state.logs.length
+    ? `${files.length} file${files.length === 1 ? "" : "s"} analyzed`
+    : "No files analyzed yet";
 }
 
 /* =========================================
@@ -1177,29 +1187,17 @@ $("clearSession")?.addEventListener("click", () => {
 
   if (!confirmed) return;
 
-  // Clear main logs
   state.logs = [];
   state.currentPage = 1;
+  state.compareRequest++;
 
-  // Clear comparison arrays
   state.compareA = [];
   state.compareB = [];
 
-  // Clear upload input
-  if ($("logFiles")) {
-    $("logFiles").value = "";
-  }
+  if ($("logFiles")) $("logFiles").value = "";
+  if ($("compareFileA")) $("compareFileA").value = "";
+  if ($("compareFileB")) $("compareFileB").value = "";
 
-  // Clear comparison file inputs
-  if ($("compareFileA")) {
-    $("compareFileA").value = "";
-  }
-
-  if ($("compareFileB")) {
-    $("compareFileB").value = "";
-  }
-
-  // Reset comparison filenames
   if ($("compareNameA")) {
     $("compareNameA").textContent = "No file selected";
   }
@@ -1208,35 +1206,13 @@ $("clearSession")?.addEventListener("click", () => {
     $("compareNameB").textContent = "No file selected";
   }
 
-  // Clear comparison results
-  if ($("compareResults")) {
-    $("compareResults").innerHTML = `
-      <div class="empty-state">
-        <strong>No comparison results yet.</strong>
-        <p>Select two log files and run a comparison to see the results.</p>
-      </div>
-    `;
-  }
+  resetCompareResults();
 
-  // Reset explorer search and filters
-  if ($("searchInput")) {
-    $("searchInput").value = "";
-  }
+  if ($("searchInput")) $("searchInput").value = "";
+  if ($("levelFilter")) $("levelFilter").value = "ALL";
+  if ($("fileFilter")) $("fileFilter").value = "ALL";
+  if ($("maskToggle")) $("maskToggle").checked = false;
 
-  if ($("levelFilter")) {
-    $("levelFilter").value = "ALL";
-  }
-
-  if ($("fileFilter")) {
-    $("fileFilter").value = "ALL";
-  }
-
-  // Disable sensitive data masking
-  if ($("maskToggle")) {
-    $("maskToggle").checked = false;
-  }
-
-  // Refresh dashboard and every section
   refreshAll();
 
   notify("All session data and comparison results cleared.");
@@ -1262,20 +1238,24 @@ document.querySelectorAll("[data-go]").forEach((button) => {
    LOG COMPARISON EVENTS
 ========================================= */
 
+// Invalidate previous comparison whenever File A changes.
 $("compareFileA")?.addEventListener("change", (event) => {
   const file = event.target.files?.[0];
 
-  state.compareA = [];
+  state.compareRequest++;
+  resetCompareResults("File selection changed. Run a new comparison to view updated results.");
 
   if ($("compareNameA")) {
     $("compareNameA").textContent = file?.name || "No file selected";
   }
 });
 
+// Invalidate previous comparison whenever File B changes.
 $("compareFileB")?.addEventListener("change", (event) => {
   const file = event.target.files?.[0];
 
-  state.compareB = [];
+  state.compareRequest++;
+  resetCompareResults("File selection changed. Run a new comparison to view updated results.");
 
   if ($("compareNameB")) {
     $("compareNameB").textContent = file?.name || "No file selected";
@@ -1287,23 +1267,48 @@ $("runCompare")?.addEventListener("click", async () => {
   const fileB = $("compareFileB")?.files?.[0];
 
   if (!fileA || !fileB) {
+    resetCompareResults("Please select both files before comparing.");
     notify("Choose both files before comparing.", "error");
     return;
   }
 
+  if (fileA === fileB) {
+    resetCompareResults("Please select two different files.");
+    notify("Choose two different files to compare.", "error");
+    return;
+  }
+
+  // Each comparison receives a unique request number.
+  // This prevents an older asynchronous comparison from overwriting newer results.
+  const requestId = ++state.compareRequest;
+
+  resetCompareResults("Reading the two selected files...");
+
   try {
-    state.compareA = await readCompareFile(fileA);
-    state.compareB = await readCompareFile(fileB);
+    // Read only the two files selected in the comparison inputs.
+    const [logsA, logsB] = await Promise.all([
+      readCompareFile(fileA),
+      readCompareFile(fileB)
+    ]);
+
+    // Ignore outdated comparison requests.
+    if (requestId !== state.compareRequest) return;
+
+    state.compareA = logsA;
+    state.compareB = logsB;
 
     compareFiles(
-      state.compareA,
-      state.compareB,
+      logsA,
+      logsB,
       fileA.name,
       fileB.name
     );
 
-    notify("Log comparison completed.");
+    notify("Comparison completed using the two selected files.");
   } catch (error) {
+    if (requestId !== state.compareRequest) return;
+
+    resetCompareResults("The selected files could not be compared. Please try again.");
     notify(error.message || "Could not compare these files.", "error");
   }
 });
@@ -1382,6 +1387,7 @@ $("menuToggle")?.addEventListener("click", () => {
 
 function initializeLogLens() {
   refreshAll();
+  resetCompareResults();
 
   window.addEventListener("resize", () => {
     updateStats();
