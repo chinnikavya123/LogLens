@@ -35,9 +35,6 @@
         <button class="nav-link" data-section="incidents">
           <span>◈</span> Incidents
         </button>
-        <button class="nav-link" data-section="anomalies">
-          <span>⌁</span> Anomaly Detection
-        </button>
         <button class="nav-link" data-section="investigator">
           <span>✧</span> Root Cause Investigator
         </button>
@@ -98,7 +95,9 @@
 
       <div class="page-content">
 
-        <!-- OVERVIEW -->
+        <!-- =================================
+             OVERVIEW
+        ================================== -->
         <section class="page-section app-section active" id="overview">
 
           <div class="page-heading">
@@ -115,6 +114,7 @@
             </button>
           </div>
 
+          <!-- HERO BANNER -->
           <div class="welcome-banner">
             <div class="banner-content">
               <span class="banner-tag">INTELLIGENT LOG ANALYSIS</span>
@@ -144,6 +144,7 @@
             </div>
           </div>
 
+          <!-- SYSTEM OVERVIEW -->
           <div class="section-heading">
             <div>
               <h2>System overview</h2>
@@ -155,6 +156,7 @@
           </div>
 
           <div class="stats-grid">
+
             <article class="stat-card">
               <div class="stat-top">
                 <span>Total log entries</span>
@@ -193,9 +195,12 @@
               <div class="stat-value" id="warningLogs">0</div>
               <div class="stat-foot">Potential concerns</div>
             </article>
+
           </div>
 
+          <!-- CHARTS -->
           <div class="dashboard-grid">
+
             <article class="panel chart-panel">
               <div class="panel-heading">
                 <div>
@@ -253,9 +258,12 @@
                 <strong id="healthWarnings">0</strong>
               </div>
             </article>
+
           </div>
 
+          <!-- RECENT ACTIVITY AND QUICK ACTIONS -->
           <div class="dashboard-grid lower-grid">
+
             <article class="panel">
               <div class="panel-heading">
                 <div>
@@ -285,46 +293,57 @@
               <div class="quick-actions">
                 <button data-go="explorer">
                   <span class="quick-icon blue">⌕</span>
-                  <span><strong>Explore logs</strong><small>Search and filter entries</small></span>
-                  <b>→</b>
-                </button>
-
-                <button data-go="anomalies">
-                  <span class="quick-icon orange">⌁</span>
-                  <span><strong>Detect anomalies</strong><small>Find unusual log activity</small></span>
+                  <span>
+                    <strong>Explore logs</strong>
+                    <small>Search and filter entries</small>
+                  </span>
                   <b>→</b>
                 </button>
 
                 <button data-go="investigator">
                   <span class="quick-icon purple">✧</span>
-                  <span><strong>Investigate issues</strong><small>Discover likely root causes</small></span>
+                  <span>
+                    <strong>Investigate issues</strong>
+                    <small>Discover likely root causes</small>
+                  </span>
                   <b>→</b>
                 </button>
 
                 <button data-go="compare">
                   <span class="quick-icon orange">⇄</span>
-                  <span><strong>Compare log files</strong><small>Find changes between files</small></span>
+                  <span>
+                    <strong>Compare log files</strong>
+                    <small>Find changes between files</small>
+                  </span>
                   <b>→</b>
                 </button>
 
                 <button data-go="reports">
                   <span class="quick-icon green">▤</span>
-                  <span><strong>Generate report</strong><small>Export your findings</small></span>
+                  <span>
+                    <strong>Generate report</strong>
+                    <small>Export your findings</small>
+                  </span>
                   <b>→</b>
                 </button>
               </div>
             </article>
+
           </div>
         </section>
 
-        <!-- LOG EXPLORER -->
+        <!-- =================================
+             LOG EXPLORER
+        ================================== -->
         <section class="page-section app-section" id="explorer">
 
           <div class="page-heading">
             <div>
               <div class="eyebrow">INVESTIGATION / LOG EXPLORER</div>
               <h1>Log Explorer</h1>
-              <p class="subtitle">Search, filter and inspect every log entry.</p>
+              <p class="subtitle">
+                Search, filter and inspect every log entry.
+              </p>
             </div>
 
             <button class="primary-button" id="explorerUpload">
@@ -336,16 +355,30 @@
             <div class="upload-icon">⇧</div>
             <div>
               <h3>Drop your log files here</h3>
-              <p>Supports .log and .txt files · Processed locally in your browser</p>
+              <p>
+                Supports .log and .txt files · Processed locally in your browser
+              </p>
             </div>
-            <button class="secondary-button" id="chooseFiles">Browse files</button>
-            <input type="file" id="logFiles" accept=".log,.txt,text/plain" multiple hidden>
+            <button class="secondary-button" id="chooseFiles">
+              Browse files
+            </button>
+            <input
+              type="file"
+              id="logFiles"
+              accept=".log,.txt,text/plain"
+              multiple
+              hidden
+            >
           </div>
 
           <div class="toolbar panel">
             <div class="search-box">
               <span>⌕</span>
-              <input id="searchInput" type="search" placeholder="Search messages, services, levels...">
+              <input
+                id="searchInput"
+                type="search"
+                placeholder="Search messages, services, levels..."
+              >
             </div>
 
             <select id="levelFilter" aria-label="Filter severity">
@@ -372,7 +405,9 @@
                 <h3>Log entries</h3>
                 <p id="resultCount">0 results</p>
               </div>
-              <button class="text-button" id="clearSession">Clear session</button>
+              <button class="text-button" id="clearSession">
+                Clear session
+              </button>
             </div>
 
             <div class="table-scroll">
@@ -389,7 +424,9 @@
                 <tbody id="logTable">
                   <tr>
                     <td colspan="5">
-                      <div class="empty-state">No logs available. Upload a log file to begin analysis.</div>
+                      <div class="empty-state">
+                        No logs available. Upload a log file to begin analysis.
+                      </div>
                     </td>
                   </tr>
                 </tbody>
@@ -406,23 +443,24 @@
           </div>
         </section>
 
-        <!-- INCIDENT CENTER -->
+        <!-- =================================
+             INCIDENTS
+        ================================== -->
         <section class="page-section app-section" id="incidents">
 
           <div class="page-heading">
             <div>
               <div class="eyebrow">INVESTIGATION / EVENT CORRELATION</div>
-              <h1>Incident Center</h1>
+              <h1>Incident Timeline</h1>
               <p class="subtitle">
-                Connect related failures, follow event sequences and understand how incidents develop.
+                Follow the sequence of events and spot recurring failures.
               </p>
             </div>
           </div>
 
-          <!-- INCIDENT SUMMARY -->
           <div class="panel incident-summary">
             <div>
-              <span>Critical and error events</span>
+              <span>Detected critical and error events</span>
               <strong id="incidentCount">0</strong>
             </div>
             <div>
@@ -435,61 +473,12 @@
             </div>
           </div>
 
-          <!-- CORRELATION OVERVIEW -->
-          <div class="panel incident-correlation-panel">
-            <div class="panel-heading">
-              <div>
-                <h3>Event correlation</h3>
-                <p>Related failures grouped by service, message pattern and time proximity</p>
-              </div>
-              <span class="local-badge">LOCAL ANALYSIS</span>
-            </div>
-
-            <div class="incident-correlation-stats">
-              <div>
-                <span>Correlated groups</span>
-                <strong id="correlatedGroupCount">0</strong>
-              </div>
-              <div>
-                <span>Repeated events</span>
-                <strong id="repeatedEventCount">0</strong>
-              </div>
-              <div>
-                <span>First occurrences</span>
-                <strong id="firstOccurrenceCount">0</strong>
-              </div>
-            </div>
-          </div>
-
-          <!-- TIMELINE -->
           <div class="panel timeline-panel">
             <div class="panel-heading">
               <div>
-                <h3>Incident timeline</h3>
-                <p>Chronological sequence of critical and error events</p>
+                <h3>Event timeline</h3>
+                <p>Chronological view of significant events</p>
               </div>
-            </div>
-
-            <div class="incident-timeline-toolbar">
-              <div class="search-box">
-                <span>⌕</span>
-                <input
-                  id="incidentSearch"
-                  type="search"
-                  placeholder="Search incidents or services..."
-                >
-              </div>
-
-              <select id="incidentSeverityFilter" aria-label="Filter incident severity">
-                <option value="ALL">All severities</option>
-                <option value="CRITICAL">Critical</option>
-                <option value="ERROR">Error</option>
-              </select>
-
-              <select id="incidentSort" aria-label="Sort timeline">
-                <option value="newest">Newest first</option>
-                <option value="oldest">Oldest first</option>
-              </select>
             </div>
 
             <div id="timelineList">
@@ -499,24 +488,6 @@
             </div>
           </div>
 
-          <!-- CORRELATED INCIDENT GROUPS -->
-          <div class="panel correlated-groups-panel">
-            <div class="panel-heading">
-              <div>
-                <h3>Correlated incident groups</h3>
-                <p>Repeated errors grouped into common patterns</p>
-              </div>
-              <span class="count-pill" id="correlationResultCount">0 groups</span>
-            </div>
-
-            <div id="correlatedGroupsList">
-              <div class="empty-state compact">
-                Correlated incidents will appear here after log analysis.
-              </div>
-            </div>
-          </div>
-
-          <!-- REPEATED PATTERNS -->
           <div class="panel">
             <div class="panel-heading">
               <div>
@@ -526,156 +497,25 @@
             </div>
 
             <div id="patternsList">
-              <div class="empty-state compact">No repeated patterns detected yet.</div>
+              <div class="empty-state compact">
+                No repeated patterns detected yet.
+              </div>
             </div>
           </div>
         </section>
 
-        <!-- ANOMALY DETECTION -->
-        <section class="page-section app-section" id="anomalies">
-
-          <div class="page-heading">
-            <div>
-              <div class="eyebrow">INTELLIGENCE / BEHAVIOR ANALYSIS</div>
-              <h1>Anomaly Detection</h1>
-              <p class="subtitle">
-                Identify unusual activity, sudden error spikes and abnormal application behavior in your logs.
-              </p>
-            </div>
-
-            <button class="primary-button" id="runAnomalyDetection">↻ Analyze logs</button>
-          </div>
-
-          <div class="investigator-intro anomaly-intro">
-            <div class="investigator-orb">⌁</div>
-            <div>
-              <h2>Discover what doesn't look normal.</h2>
-              <p>
-                LogLens analyzes log activity to identify unusual error concentrations,
-                sudden severity changes and repeated failures. Each detection includes
-                an explanation to help you investigate.
-              </p>
-            </div>
-          </div>
-
-          <div class="section-heading">
-            <div>
-              <h2>Anomaly overview</h2>
-              <p>Summary of unusual patterns in the current log session</p>
-            </div>
-            <span class="session-label" id="anomalyStatus">Waiting for analysis</span>
-          </div>
-
-          <div class="stats-grid anomaly-stats">
-            <article class="stat-card">
-              <div class="stat-top">
-                <span>Total anomalies</span>
-                <span class="stat-icon purple">⌁</span>
-              </div>
-              <div class="stat-value" id="anomalyCount">0</div>
-              <div class="stat-foot">Unusual patterns identified</div>
-            </article>
-
-            <article class="stat-card">
-              <div class="stat-top">
-                <span>High severity</span>
-                <span class="stat-icon red">!</span>
-              </div>
-              <div class="stat-value" id="highAnomalyCount">0</div>
-              <div class="stat-foot">Requires closer investigation</div>
-            </article>
-
-            <article class="stat-card">
-              <div class="stat-top">
-                <span>Affected services</span>
-                <span class="stat-icon orange">◈</span>
-              </div>
-              <div class="stat-value" id="affectedServiceCount">0</div>
-              <div class="stat-foot">Services showing unusual activity</div>
-            </article>
-
-            <article class="stat-card">
-              <div class="stat-top">
-                <span>Analyzed entries</span>
-                <span class="stat-icon blue">▤</span>
-              </div>
-              <div class="stat-value" id="analyzedEntryCount">0</div>
-              <div class="stat-foot">Logs included in this analysis</div>
-            </article>
-          </div>
-
-          <div class="panel anomaly-method-panel">
-            <div class="panel-heading">
-              <div>
-                <h3>Detection methodology</h3>
-                <p>How LogLens identifies unusual log behavior</p>
-              </div>
-              <span class="local-badge">LOCAL ANALYSIS</span>
-            </div>
-
-            <div class="anomaly-method-grid">
-              <div class="anomaly-method-item">
-                <span class="method-icon blue">↗</span>
-                <div>
-                  <strong>Error spike detection</strong>
-                  <p>Finds unusual concentrations of errors within short time periods.</p>
-                </div>
-              </div>
-
-              <div class="anomaly-method-item">
-                <span class="method-icon purple">⌁</span>
-                <div>
-                  <strong>Severity distribution</strong>
-                  <p>Identifies abnormal changes in the distribution of log levels.</p>
-                </div>
-              </div>
-
-              <div class="anomaly-method-item">
-                <span class="method-icon orange">⟳</span>
-                <div>
-                  <strong>Repeated failure detection</strong>
-                  <p>Highlights recurring error patterns that may indicate persistent problems.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="panel anomaly-results-panel">
-            <div class="panel-heading">
-              <div>
-                <h3>Detected anomalies</h3>
-                <p>Unusual events and patterns requiring attention</p>
-              </div>
-              <span class="count-pill" id="anomalyResultCount">0 findings</span>
-            </div>
-
-            <div id="anomalyList">
-              <div class="empty-state">
-                <div class="empty-icon">⌁</div>
-                <strong>No analysis performed yet</strong>
-                <p>Upload log files and select Analyze logs to discover unusual activity.</p>
-              </div>
-            </div>
-          </div>
-
-          <div class="anomaly-disclaimer">
-            <span>ⓘ</span>
-            <p>
-              Anomaly detection is based on statistical patterns and rule-based
-              analysis of uploaded logs. Findings are indicators for investigation,
-              not confirmed application failures.
-            </p>
-          </div>
-        </section>
-
-        <!-- ROOT CAUSE INVESTIGATOR -->
+        <!-- =================================
+             ROOT CAUSE INVESTIGATOR
+        ================================== -->
         <section class="page-section app-section" id="investigator">
 
           <div class="page-heading">
             <div>
               <div class="eyebrow">INTELLIGENCE / ROOT CAUSE ANALYSIS</div>
               <h1>Root Cause Investigator</h1>
-              <p class="subtitle">Turn confusing error messages into actionable debugging steps.</p>
+              <p class="subtitle">
+                Turn confusing error messages into actionable debugging steps.
+              </p>
             </div>
             <span class="local-badge">RULE-BASED ENGINE</span>
           </div>
@@ -701,32 +541,43 @@
             </div>
 
             <div id="findingsList">
-              <div class="empty-state">Upload logs containing errors to generate investigation findings.</div>
+              <div class="empty-state">
+                Upload logs containing errors to generate investigation findings.
+              </div>
             </div>
           </div>
         </section>
 
-        <!-- COMPARE LOGS -->
+        <!-- =================================
+             COMPARE LOGS
+        ================================== -->
         <section class="page-section app-section" id="compare">
 
           <div class="page-heading">
             <div>
               <div class="eyebrow">ANALYSIS / CHANGE DETECTION</div>
               <h1>Compare Logs</h1>
-              <p class="subtitle">Compare two log files to discover new and changed issues.</p>
+              <p class="subtitle">
+                Compare two log files to discover new and changed issues.
+              </p>
             </div>
           </div>
 
           <div class="compare-grid">
+
             <div class="panel compare-upload">
               <span class="compare-number">FILE A</span>
               <h3>Baseline log</h3>
               <p>Choose your original or earlier log file.</p>
+
               <label class="file-picker">
                 ＋ Choose first file
                 <input type="file" id="compareFileA" accept=".log,.txt">
               </label>
-              <div id="compareNameA" class="file-name">No file selected</div>
+
+              <div id="compareNameA" class="file-name">
+                No file selected
+              </div>
             </div>
 
             <div class="compare-middle">VS</div>
@@ -735,26 +586,38 @@
               <span class="compare-number">FILE B</span>
               <h3>Updated log</h3>
               <p>Choose the newer log file for comparison.</p>
+
               <label class="file-picker">
                 ＋ Choose second file
                 <input type="file" id="compareFileB" accept=".log,.txt">
               </label>
-              <div id="compareNameB" class="file-name">No file selected</div>
+
+              <div id="compareNameB" class="file-name">
+                No file selected
+              </div>
             </div>
+
           </div>
 
-          <button class="primary-button compare-button" id="runCompare">Compare files →</button>
+          <button class="primary-button compare-button" id="runCompare">
+            Compare files →
+          </button>
+
           <div id="compareResults"></div>
         </section>
 
-        <!-- REPORTS -->
+        <!-- =================================
+             REPORTS
+        ================================== -->
         <section class="page-section app-section" id="reports">
 
           <div class="page-heading">
             <div>
               <div class="eyebrow">EXPORT / INVESTIGATION REPORTS</div>
               <h1>Analysis Reports</h1>
-              <p class="subtitle">Create a shareable summary of your current investigation.</p>
+              <p class="subtitle">
+                Create a shareable summary of your current investigation.
+              </p>
             </div>
           </div>
 
@@ -766,13 +629,17 @@
                 Your report includes severity distribution, application health,
                 repeated errors, incident findings and suggested actions.
               </p>
-              <div class="report-meta" id="reportMeta">No analysis session available</div>
+              <div class="report-meta" id="reportMeta">
+                No analysis session available
+              </div>
             </div>
           </div>
 
           <div class="report-stats" id="reportStats"></div>
 
-          <button class="primary-button" id="downloadReport">↓ Download report (.txt)</button>
+          <button class="primary-button" id="downloadReport">
+            ↓ Download report (.txt)
+          </button>
         </section>
 
         <!-- FOOTER -->
