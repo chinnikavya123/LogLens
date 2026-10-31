@@ -96,7 +96,6 @@ function getFileName(file) {
 function classify(message) {
   const text = String(message || "");
 
-  // Explicit severity labels take priority.
   const explicit = text.match(
     /\b(CRITICAL|FATAL|SEVERE|ERROR|ERR|WARNING|WARN|INFO|INFORMATIONAL|DEBUG|TRACE)\b/i
   );
@@ -1070,6 +1069,10 @@ $("bannerUpload")?.addEventListener("click", () => {
   $("logFiles")?.click();
 });
 
+$("explorerUpload")?.addEventListener("click", () => {
+  $("logFiles")?.click();
+});
+
 $("logFiles")?.addEventListener("change", async (event) => {
   await handleFiles(event.target.files);
   event.target.value = "";
@@ -1151,26 +1154,92 @@ $("nextPage")?.addEventListener("click", () => {
 });
 
 /* =========================================
-   CLEAR SESSION
+   CLEAR SESSION — RESET ALL DATA
 ========================================= */
 
 $("clearSession")?.addEventListener("click", () => {
-  if (!state.logs.length) {
-    notify("There are no logs to clear.", "error");
+  const hasMainLogs = state.logs.length > 0;
+
+  const hasComparisonData =
+    state.compareA.length > 0 ||
+    state.compareB.length > 0 ||
+    $("compareFileA")?.files?.length > 0 ||
+    $("compareFileB")?.files?.length > 0;
+
+  if (!hasMainLogs && !hasComparisonData) {
+    notify("There is no session data to clear.", "error");
     return;
   }
 
   const confirmed = window.confirm(
-    "Clear all imported logs from this browser session?"
+    "Clear all imported logs, comparison files, and results from this session?"
   );
 
   if (!confirmed) return;
 
+  // Clear main logs
   state.logs = [];
   state.currentPage = 1;
 
+  // Clear comparison arrays
+  state.compareA = [];
+  state.compareB = [];
+
+  // Clear upload input
+  if ($("logFiles")) {
+    $("logFiles").value = "";
+  }
+
+  // Clear comparison file inputs
+  if ($("compareFileA")) {
+    $("compareFileA").value = "";
+  }
+
+  if ($("compareFileB")) {
+    $("compareFileB").value = "";
+  }
+
+  // Reset comparison filenames
+  if ($("compareNameA")) {
+    $("compareNameA").textContent = "No file selected";
+  }
+
+  if ($("compareNameB")) {
+    $("compareNameB").textContent = "No file selected";
+  }
+
+  // Clear comparison results
+  if ($("compareResults")) {
+    $("compareResults").innerHTML = `
+      <div class="empty-state">
+        <strong>No comparison results yet.</strong>
+        <p>Select two log files and run a comparison to see the results.</p>
+      </div>
+    `;
+  }
+
+  // Reset explorer search and filters
+  if ($("searchInput")) {
+    $("searchInput").value = "";
+  }
+
+  if ($("levelFilter")) {
+    $("levelFilter").value = "ALL";
+  }
+
+  if ($("fileFilter")) {
+    $("fileFilter").value = "ALL";
+  }
+
+  // Disable sensitive data masking
+  if ($("maskToggle")) {
+    $("maskToggle").checked = false;
+  }
+
+  // Refresh dashboard and every section
   refreshAll();
-  notify("Current log session cleared.");
+
+  notify("All session data and comparison results cleared.");
 });
 
 /* =========================================
